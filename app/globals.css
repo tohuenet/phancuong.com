@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0F0F12;
+  --foreground: #FDFBFF;
+  
+  /* Layout Tokens */
+  --container-max: 1280px;
+  --blog-max: 768px;
+  
+  /* Safe Spacing */
+  --px-mobile: 16px;
+  --px-tablet: 24px;
+  --px-desktop: 32px;
+}
+
+[data-mui-color-scheme='light'] {
+  --background: #FDFBFF;
+  --foreground: #0F0F12;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.page-container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding-left: var(--px-mobile);
+  padding-right: var(--px-mobile);
+}
+
+@media (min-width: 600px) {
+  .page-container {
+    padding-left: var(--px-tablet);
+    padding-right: var(--px-tablet);
+  }
+}
+
+@media (min-width: 1200px) {
+  .page-container {
+    padding-left: var(--px-desktop);
+    padding-right: var(--px-desktop);
+  }
+}
+
+.blog-content {
+  max-width: var(--blog-max);
+  margin: 0 auto;
+}
+
+/* Rehype Pretty Code - Enhanced Styles (Telegraph Pro) */
+[data-rehype-pretty-code-figure] {
+  margin: 3rem 0;
+  position: relative;
+}
+
+/* Terminal Wrapper */
+[data-rehype-pretty-code-figure] pre {
+  padding: 1rem 0;
+  border-radius: 0 0 12px 12px;
+  overflow-x: auto;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  counter-reset: line; /* Reset counter for line numbers */
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* Code Block Styles */
+[data-rehype-pretty-code-figure] code {
+  display: grid;
+  min-width: 100%;
+}
+
+/* Line Numbering */
+[data-rehype-pretty-code-figure] [data-line] {
+  padding: 0 1.5rem 0 3.5rem;
+  position: relative;
+  min-height: 1.5em;
+}
+
+[data-rehype-pretty-code-figure] [data-line]::before {
+  counter-increment: line;
+  content: counter(line);
+  position: absolute;
+  left: 0;
+  width: 2.5rem;
+  text-align: right;
+  padding-right: 1rem;
+  color: #555;
+  font-size: 0.75rem;
+  user-select: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Highlighted Lines */
+[data-rehype-pretty-code-figure] [data-highlighted-line] {
+  background: rgba(234, 179, 8, 0.1); /* primary alpha */
+  border-left: 3px solid #EAB308;
+}
+
+/* Terminal Title Bar / Header */
+.terminal-header {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px 12px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: none;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dot-red { background: #ff5f56; }
+.dot-yellow { background: #ffbd2e; }
+.dot-green { background: #27c93f; }
+
+/* Theme Switching Logic */
+[data-rehype-pretty-code-figure] [data-theme='light'] {
+  display: block;
+}
+[data-rehype-pretty-code-figure] [data-theme='dark'] {
+  display: none;
+}
+
+[data-mui-color-scheme='dark'] [data-theme='light'] {
+  display: none !important;
+}
+[data-mui-color-scheme='dark'] [data-theme='dark'] {
+  display: block !important;
+}
+[data-mui-color-scheme='light'] [data-theme='dark'] {
+  display: none !important;
+}
+[data-mui-color-scheme='light'] [data-theme='light'] {
+  display: block !important;
+}
+
+/* View Transitions */
+::view-transition-group(.post-header-shared) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(.post-body-exit) {
+  animation:
+    140ms ease-out both fade-out,
+    180ms ease-out both slide-down;
+}
+
+::view-transition-new(.post-body-enter) {
+  animation:
+    240ms ease-out 120ms both fade-in,
+    320ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both slide-up;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(12px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(8px);
+  }
+}
+
+/* Theme transition — book-page-flip sweep (top-left → bottom-right).
+   The new theme is revealed behind a growing right-triangle clip whose
+   hypotenuse travels from the top-left corner across the viewport toward
+   the bottom-right, mimicking the fold line of a page being turned. A
+   drop-shadow along that diagonal edge gives the new "page" a subtle lift
+   off the old surface. */
+html.theme-book-flip-transition::view-transition-group(root) {
+  animation-duration: 720ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Freeze the old snapshot underneath — the new page flips over it. */
+html.theme-book-flip-transition::view-transition-old(root) {
+  animation: none;
+  z-index: 1;
+}
+
+/* New theme "turns in" along the top-left → bottom-right diagonal. */
+html.theme-book-flip-to-dark::view-transition-new(root),
+html.theme-book-flip-to-light::view-transition-new(root) {
+  animation:
+    theme-page-flip 720ms cubic-bezier(0.65, 0, 0.35, 1) both,
+    theme-page-flip-shadow 720ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  z-index: 2;
+}
+
+@keyframes theme-page-flip {
+  from {
+    /* Degenerate triangle pinned at the top-left corner. */
+    clip-path: polygon(-1% -1%, -1% -1%, -1% -1%);
+  }
+  to {
+    /* Triangle grown past the bottom-right corner so the hypotenuse
+       (the "fold") exits off-viewport at ~225% on both axes. */
+    clip-path: polygon(-1% -1%, 225% -1%, -1% 225%);
+  }
+}
+
+/* A fading drop-shadow tracked by the clip-path sells the "raised page"
+   feel without a second animated element. The shadow is strongest in the
+   middle of the flip, when the fold line is mid-viewport. */
+@keyframes theme-page-flip-shadow {
+  0% {
+    filter: drop-shadow(-2px -2px 0 rgba(0, 0, 0, 0));
+  }
+  50% {
+    filter: drop-shadow(-6px -6px 18px rgba(0, 0, 0, 0.38));
+  }
+  100% {
+    filter: drop-shadow(-2px -2px 0 rgba(0, 0, 0, 0));
+  }
+}
+
+/* Respect reduced-motion: swap themes instantly instead of flipping. */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-book-flip-to-dark::view-transition-new(root),
+  html.theme-book-flip-to-light::view-transition-new(root) {
+    animation: none;
+  }
+}
