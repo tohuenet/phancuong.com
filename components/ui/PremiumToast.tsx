@@ -31,7 +31,7 @@ export const PremiumToast = ({ message, type = 'success' }: PremiumToastProps) =
     switch (type) {
       case 'success': return tokens.color.success;
       case 'error': return tokens.color.error;
-      case 'info': return tokens.color.blue || tokens.color.info;
+      case 'info': return tokens.color.info;
       default: return tokens.color.primary;
     }
   };
