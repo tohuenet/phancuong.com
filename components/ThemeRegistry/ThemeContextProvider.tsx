@@ -61,53 +61,48 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
 
   const colorMode = React.useMemo(
     () => ({
-      toggleColorMode: () => {
+      toggleColorMode: (event?: React.MouseEvent | { x: number; y: number }) => {
         if (typeof window === 'undefined' || typeof document === 'undefined') {
           setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
           return;
         }
 
-        if (isThemeTransitioningRef.current) {
-          return;
-        }
-
-        const shouldReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const doc = document as Document & {
-          startViewTransition?: (updateCallback: () => void | Promise<void>) => ViewTransition;
-        };
-        const supportsViewTransition = typeof doc.startViewTransition === 'function';
-        const root = document.documentElement;
-
-        if (!supportsViewTransition || shouldReduceMotion) {
+        const doc = document as any;
+        if (!doc.startViewTransition) {
           setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
           return;
         }
 
-        isThemeTransitioningRef.current = true;
-        const nextMode = mode === 'light' ? 'dark' : 'light';
-        const directionClass = mode === 'light' ? 'theme-book-flip-to-dark' : 'theme-book-flip-to-light';
-        root.classList.add('theme-book-flip-transition', directionClass);
+        const x = event && 'clientX' in event ? event.clientX : (event as any)?.x ?? window.innerWidth / 2;
+        const y = event && 'clientY' in event ? event.clientY : (event as any)?.y ?? window.innerHeight / 2;
+        const endRadius = Math.hypot(
+          Math.max(x, window.innerWidth - x),
+          Math.max(y, window.innerHeight - y)
+        );
 
-        // startViewTransition snapshots synchronously on callback return.
-        // Without flushSync, React defers the commit and both snapshots are
-        // identical — the flip would have nothing to animate against.
-        const transition = doc.startViewTransition(() => {
+        const transition = doc.startViewTransition(async () => {
           flushSync(() => {
-            root.setAttribute('data-mui-color-scheme', nextMode);
+            const nextMode = mode === 'light' ? 'dark' : 'light';
             setMode(nextMode);
+            document.documentElement.setAttribute('data-mui-color-scheme', nextMode);
           });
         });
 
-        transition.finished
-          .catch(() => undefined)
-          .finally(() => {
-            root.classList.remove(
-              'theme-book-flip-transition',
-              'theme-book-flip-to-dark',
-              'theme-book-flip-to-light',
-            );
-            isThemeTransitioningRef.current = false;
-          });
+        transition.ready.then(() => {
+          document.documentElement.animate(
+            {
+              clipPath: [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${endRadius}px at ${x}px ${y}px)`,
+              ],
+            },
+            {
+              duration: 500,
+              easing: 'ease-in-out',
+              pseudoElement: '::view-transition-new(root)',
+            }
+          );
+        });
       },
     }),
     [mode],
@@ -173,15 +168,34 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
       components: {
         MuiCssBaseline: {
           styleOverrides: {
+            '*': {
+              '::selection': {
+                backgroundColor: alpha(tokens.color.primary, 0.25),
+                color: 'inherit',
+              },
+            },
             body: {
-              transition: `background-color 0.4s ${tokens.transitions.standard}, color 0.4s ${tokens.transitions.standard}`,
               scrollbarWidth: 'thin',
-              '&::-webkit-scrollbar': { width: '8px' },
+              scrollbarColor: `${alpha(paletteTokens.onSurface, 0.15)} transparent`,
+              '&::-webkit-scrollbar': { width: '8px', height: '8px' },
+              '&::-webkit-scrollbar-track': { background: 'transparent' },
               '&::-webkit-scrollbar-thumb': {
                 backgroundColor: alpha(paletteTokens.onSurface, 0.15),
                 borderRadius: '10px',
+                border: '2px solid transparent',
+                backgroundClip: 'content-box',
                 '&:hover': { backgroundColor: alpha(paletteTokens.onSurface, 0.25) },
               },
+            },
+            '::view-transition-old(root), ::view-transition-new(root)': {
+              animation: 'none',
+              mixBlendMode: 'normal',
+            },
+            '::view-transition-old(root)': {
+              zIndex: 1,
+            },
+            '::view-transition-new(root)': {
+              zIndex: 9999,
             },
             '.glass': {
               position: 'relative',

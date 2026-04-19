@@ -1,0 +1,20 @@
+{
+  "title": "Thử nghiệm bài viết",
+  "slug": "th-nghi-m-b-i-vi-t",
+  "content": "<p>Hello&nbsp;world</p><pre data-language=\"plain\">\n&lt;?php\nphpinfo();\n?&gt;\n</pre>",
+  "excerpt": "",
+  "thumbnailUrl": "",
+  "published": true,
+  "order": 0,
+  "id": "ff11d9d4-5aa9-4f00-bd62-2043e4850312",
+  "createdAt": "2026-04-19T10:51:30.380Z",
+  "updatedAt": "2026-04-19T10:51:30.380Z",
+  "tags": [
+    {
+      "id": "d27c0b2f-4181-4dd0-827b-25a89576b8b3",
+      "name": "test",
+      "slug": "test"
+    }
+  ],
+  "deletedAt": "2026-04-19T10:55:39.431Z"
+}

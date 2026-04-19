@@ -6,6 +6,7 @@ import { Typography, Box, Link as MuiLink, useTheme, alpha, Button } from '@mui/
 import Link from 'next/link';
 import { tokens } from '@/lib/theme-tokens';
 import ImageLightbox from '@/components/common/ImageLightbox';
+import ScrollReveal from '@/components/common/ScrollReveal';
 
 interface MDXContentProps {
   source: MDXRemoteSerializeResult;
@@ -129,62 +130,72 @@ const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>)
 
 const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
   h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <Typography 
-      variant="h3" 
-      component="h1" 
-      sx={{ 
-        mt: 10, mb: 4, 
-        fontWeight: 600, 
-        fontFamily: tokens.typography.fontFamily.serif,
-        letterSpacing: '-0.02em',
-        lineHeight: 1.2,
-        color: 'text.primary'
-      }} 
-      {...props} 
-    />
+    <ScrollReveal>
+      <Typography 
+        variant="h3" 
+        component="h1" 
+        sx={{ 
+          mt: 10, mb: 4, 
+          fontWeight: 600, 
+          fontFamily: tokens.typography.fontFamily.serif,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2,
+          color: 'text.primary'
+        }} 
+        {...props} 
+      />
+    </ScrollReveal>
   ),
   h2: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <Typography 
-      variant="h4" 
-      component="h2" 
-      sx={{ 
-        mt: 8, mb: 3, 
-        fontWeight: 600, 
-        fontFamily: tokens.typography.fontFamily.serif,
-        letterSpacing: '-0.01em',
-        lineHeight: 1.3,
-        color: 'text.primary'
-      }} 
-      {...props} 
-    />
+    <ScrollReveal>
+      <Typography 
+        variant="h4" 
+        component="h2" 
+        sx={{ 
+          mt: 8, mb: 3, 
+          fontWeight: 600, 
+          fontFamily: tokens.typography.fontFamily.serif,
+          letterSpacing: '-0.01em',
+          lineHeight: 1.3,
+          color: 'text.primary'
+        }} 
+        {...props} 
+      />
+    </ScrollReveal>
   ),
   h3: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <Typography 
-      variant="h5" 
-      component="h3" 
-      sx={{ 
-        mt: 6, mb: 2, 
-        fontWeight: 600, 
-        fontFamily: tokens.typography.fontFamily.serif,
-        lineHeight: 1.4,
-        color: 'text.primary'
-      }} 
-      {...props} 
-    />
+    <ScrollReveal>
+      <Typography 
+        variant="h5" 
+        component="h3" 
+        sx={{ 
+          mt: 6, mb: 2, 
+          fontWeight: 600, 
+          fontFamily: tokens.typography.fontFamily.serif,
+          lineHeight: 1.4,
+          color: 'text.primary'
+        }} 
+        {...props} 
+      />
+    </ScrollReveal>
   ),
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <Typography 
-      variant="body1" 
-      sx={{ 
-        mb: 4, 
-        lineHeight: 1.9, 
-        fontSize: '1.3rem',
-        fontFamily: tokens.typography.fontFamily.serif,
-        color: 'text.secondary',
-        fontWeight: 400
-      }} 
-      {...props} 
-    />
+    <ScrollReveal>
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          mb: 4, 
+          lineHeight: 1.9, 
+          fontSize: '1.3rem',
+          fontFamily: tokens.typography.fontFamily.serif,
+          color: 'text.secondary',
+          fontWeight: 400,
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word'
+        }} 
+        {...props} 
+      />
+    </ScrollReveal>
   ),
   a: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
     const normalizedHref = normalizeHref(href);
@@ -238,28 +249,36 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
     );
   },
   blockquote: (props: React.BlockquoteHTMLAttributes<HTMLQuoteElement>) => (
-    <Box
-      component="blockquote"
-      sx={{
-        borderLeft: '4px solid',
-        borderColor: 'primary.main',
-        pl: 5,
-        py: 1.5,
-        my: 10,
-        '& p': { 
-          mb: 0, 
-          fontStyle: 'italic', 
-          fontSize: '1.5rem', 
-          fontFamily: tokens.typography.fontFamily.serif,
-          color: 'text.primary', 
-          opacity: 0.8,
-          lineHeight: 1.6
-        },
-      }}
-      {...props}
-    />
+    <ScrollReveal>
+      <Box
+        component="blockquote"
+        sx={{
+          borderLeft: '4px solid',
+          borderColor: 'primary.main',
+          pl: 5,
+          py: 1.5,
+          my: 10,
+          '& p': { 
+            mb: 0, 
+            fontStyle: 'italic', 
+            fontSize: '1.5rem', 
+            fontFamily: tokens.typography.fontFamily.serif,
+            color: 'text.primary', 
+            opacity: 0.8,
+            lineHeight: 1.6,
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word'
+          },
+        }}
+        {...props}
+      />
+    </ScrollReveal>
   ),
-  pre: CodeBlock,
+  pre: (props: any) => (
+    <ScrollReveal>
+      <CodeBlock {...props} />
+    </ScrollReveal>
+  ),
   img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
     const { src, onClick, ...imgProps } = props;
     const normalizedSrc = typeof src === 'string' ? src : undefined;
@@ -349,7 +368,10 @@ export default function MDXContent({ source }: MDXContentProps) {
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
             fontFamily: 'monospace'
-          }
+          },
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          hyphens: 'auto'
         }}
       >
         <MDXRemote {...source} components={components} />

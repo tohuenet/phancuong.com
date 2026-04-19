@@ -35,7 +35,10 @@
     "đang",
     "được",
     "quay",
-    "lại"
+    "lại",
+    "healthcheck",
+    "isready",
+    "NEXTAUTH"
   ],
   "ignorePaths": [
     "node_modules",

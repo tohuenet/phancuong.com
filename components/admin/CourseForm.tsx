@@ -17,6 +17,7 @@ import { useState, useEffect } from 'react';
 import SaveIcon from '@mui/icons-material/Save';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Link from 'next/link';
+import { slugify } from '@/lib/slug';
 
 interface CourseFormProps {
   initialData?: any;
@@ -43,10 +44,7 @@ export default function CourseForm({ initialData, isEditing = false }: CourseFor
   // Auto-generate slug from title
   useEffect(() => {
     if (!isEditing && title && slugStatus === 'auto') {
-      const generatedSlug = title
-        .toLowerCase()
-        .replace(/[^a-z0-t0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+      const generatedSlug = slugify(title);
       setValue('slug', generatedSlug);
     }
   }, [title, setValue, isEditing, slugStatus]);

@@ -1,0 +1,97 @@
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { CommentsDB, PostsDB } from '@/lib/storage';
+import { sendCommentNotification } from '@/lib/mail';
+import { v4 as uuidv4 } from 'uuid';
+
+// Helper to strip HTML tags for "no media/text only" requirement
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>?/gm, '');
+}
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+
+  try {
+    const allComments = await CommentsDB.getAll();
+    const postComments = allComments
+      .filter(c => c.postSlug === slug)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return NextResponse.json(postComments);
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
+  }
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized. Please sign in to comment.' }, { status: 401 });
+  }
+
+  try {
+    const { content, parentId } = await request.json();
+    
+    if (!content || content.trim().length === 0) {
+      return NextResponse.json({ error: 'Comment content cannot be empty' }, { status: 400 });
+    }
+
+    // Strict safety check: Strip all HTML tags
+    const cleanContent = stripHtml(content).trim();
+    
+    if (cleanContent.length === 0) {
+      return NextResponse.json({ error: 'Invalid comment content' }, { status: 400 });
+    }
+
+    const post = await PostsDB.getBySlug(slug);
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    const headersList = await request.headers;
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] || 
+               headersList.get('x-real-ip') || 
+               'unknown';
+
+    const comment = {
+      id: uuidv4(),
+      postSlug: slug,
+      parentId: parentId || null, 
+      authorName: session.user?.name || 'Anonymous',
+      authorImage: null, // Always null for Letter Avatars
+      authorEmail: session.user?.email,
+      content: cleanContent,
+      originalContent: cleanContent,
+      editHistory: [],
+      ip: ip,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await CommentsDB.save(comment);
+
+    // Notify Admin
+    const siteUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    sendCommentNotification({
+      postTitle: post.title,
+      postUrl: `${siteUrl}/blog/${slug}`,
+      commentAuthor: comment.authorName,
+      commentContent: comment.content,
+    }).catch(err => console.error('Notification Error:', err));
+
+    return NextResponse.json(comment);
+  } catch (error) {
+    console.error('Comment POST Error:', error);
+    return NextResponse.json({ error: 'Failed to post comment' }, { status: 500 });
+  }
+}

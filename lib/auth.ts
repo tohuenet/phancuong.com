@@ -12,7 +12,6 @@ declare module "next-auth" {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -21,15 +20,14 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
-      const allowedEmail = process.env.ALLOWED_EMAIL;
-      if (user.email && allowedEmail && user.email === allowedEmail) {
-        return true;
-      }
-      return "/unauthorized";
+      // Allow all Google users to sign in for commenting
+      return true;
     },
     async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
+      if (session.user) {
+        // Since we don't have a DB user, we just use the token/google data
+        // and mark it as admin if the email matches.
+        (session.user as any).isAdmin = session.user.email === process.env.ALLOWED_EMAIL;
       }
       return session;
     },

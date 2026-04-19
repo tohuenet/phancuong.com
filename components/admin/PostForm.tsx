@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import QuillEditor from './QuillEditor';
 import { useSession } from 'next-auth/react';
+import { slugify } from '@/lib/slug';
 
 interface PostData {
   id?: string;
@@ -78,11 +79,7 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
 
     // Auto-generate slug if not present
     if (!submissionData.slug) {
-      const timestamp = new Date().getTime();
-      submissionData.slug = submissionData.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '') || `post-${timestamp}`;
+      submissionData.slug = slugify(submissionData.title);
     }
 
     // Auto-generate excerpt from HTML content
@@ -196,19 +193,6 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
           }}
         />
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              color: 'text.secondary', 
-              fontSize: '1.1rem',
-              fontFamily: '"Georgia", serif',
-              opacity: 0.5
-            }}
-          >
-            {session?.user?.name || 'Author'}
-          </Typography>
-        </Box>
 
         {/* Content Area */}
         <Box sx={{ mt: 4 }}>

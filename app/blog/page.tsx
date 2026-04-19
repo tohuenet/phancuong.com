@@ -4,7 +4,7 @@ import BlogListClient from '@/components/blog/BlogListClient';
 
 export const metadata: Metadata = {
   title: 'Blog',
-  description: 'Technical articles, career advice and coding tutorials by Phan Cuong.',
+  description: 'Technical articles, career advice and coding tutorials.',
 };
 
 interface BlogPageProps {

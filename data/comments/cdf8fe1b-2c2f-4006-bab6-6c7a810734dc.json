@@ -1,0 +1,22 @@
+{
+  "id": "cdf8fe1b-2c2f-4006-bab6-6c7a810734dc",
+  "postSlug": "thu-nghiem-bai-viet-lrh4i",
+  "authorName": "Cuong Phan",
+  "authorImage": null,
+  "authorEmail": "sys.cuong@gmail.com",
+  "content": "Hello123123",
+  "originalContent": "Hello123",
+  "editHistory": [
+    {
+      "content": "Hello123",
+      "editedAt": "2026-04-19T10:59:09.293Z"
+    },
+    {
+      "content": "Hello123123",
+      "editedAt": "2026-04-19T10:59:16.969Z"
+    }
+  ],
+  "ip": "::1",
+  "createdAt": "2026-04-19T10:58:54.766Z",
+  "updatedAt": "2026-04-19T10:59:16.969Z"
+}

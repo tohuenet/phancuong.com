@@ -29,15 +29,15 @@ export const viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://phancuong.com'),
   title: {
-    default: 'Phan Cuong - Senior Fullstack Engineer',
-    template: '%s | Phan Cuong',
+    default: 'Technical Blog & Portfolio',
+    template: '%s | phancuong.com',
   },
-  description: 'Personal portfolio and technical blog by Phan Cuong',
+  description: 'Technical articles, engineering insights, and software development tutorials.',
   openGraph: {
-    title: 'Phan Cuong - Senior Fullstack Engineer',
-    description: 'Personal portfolio and technical blog by Phan Cuong',
+    title: 'Technical Blog & Portfolio',
+    description: 'Practical software engineering guides and technical insights.',
     url: 'https://phancuong.com',
-    siteName: 'Phan Cuong Portfolio',
+    siteName: 'phancuong.com',
     locale: 'vi_VN',
     type: 'website',
   },

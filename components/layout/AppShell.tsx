@@ -177,10 +177,74 @@ export default function AppShell({ children }: AppShellProps) {
           gap: 1.5
         }}
       >
-        {/* Admin Buttons — only when logged in */}
+        {/* Admin/User Buttons */}
         <AnimatePresence>
+          {!session && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Tooltip title="Đăng nhập" placement="left">
+                <IconButton
+                  onClick={(e) => toggleColorMode(e)}
+                  sx={{
+                    padding: '10px',
+                    bgcolor: alpha(theme.palette.background.default, 0.4),
+                    backdropFilter: 'blur(12px) saturate(180%)',
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                    boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
+                    color: 'primary.main',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      bgcolor: alpha(theme.palette.primary.main, 0.1),
+                      borderColor: alpha(theme.palette.primary.main, 0.5),
+                      boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
+                    },
+                  }}
+                >
+                  <LogoutIcon sx={{ fontSize: 20, transform: 'rotate(180deg)' }} />
+                </IconButton>
+              </Tooltip>
+            </motion.div>
+          )}
+
           {session?.user && (
             <>
+              {(session.user as any).isAdmin && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Tooltip title="Bài viết mới" placement="left">
+                    <IconButton
+                      component={Link}
+                      href="/admin/posts/new"
+                      sx={{
+                        padding: '10px',
+                        bgcolor: alpha(theme.palette.background.default, 0.4),
+                        backdropFilter: 'blur(12px) saturate(180%)',
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                        boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
+                        color: 'primary.main',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.1),
+                          borderColor: alpha(theme.palette.primary.main, 0.5),
+                          boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
+                        },
+                      }}
+                    >
+                      <AddIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                </motion.div>
+              )}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -188,37 +252,7 @@ export default function AppShell({ children }: AppShellProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Tooltip title="Bài viết mới">
-                  <IconButton
-                    component={Link}
-                    href="/admin/posts/new"
-                    sx={{
-                      padding: '10px',
-                      bgcolor: alpha(theme.palette.background.default, 0.4),
-                      backdropFilter: 'blur(12px) saturate(180%)',
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                      boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
-                      color: 'primary.main',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                        borderColor: alpha(theme.palette.primary.main, 0.5),
-                        boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
-                      },
-                    }}
-                  >
-                    <AddIcon sx={{ fontSize: 20 }} />
-                  </IconButton>
-                </Tooltip>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Tooltip title="Đăng xuất">
+                <Tooltip title="Đăng xuất" placement="left">
                   <IconButton
                     onClick={() => signOut()}
                     sx={{
@@ -246,97 +280,101 @@ export default function AppShell({ children }: AppShellProps) {
         </AnimatePresence>
 
         {/* Layout Toggle — hidden on mobile */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <IconButton
-            onClick={toggleWideMode}
-            sx={{
-              display: { xs: 'none', md: 'inline-flex' },
-              padding: '10px',
-              bgcolor: alpha(theme.palette.background.default, 0.4),
-              backdropFilter: 'blur(12px) saturate(180%)',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
-              color: 'text.secondary',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                borderColor: alpha(theme.palette.primary.main, 0.5),
-                boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
-                color: 'primary.main',
-              }
-            }}
+        <Tooltip title={isWide ? 'Chế độ tập trung' : 'Chế độ mở rộng'} placement="left">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={isWide ? 'wide' : 'narrow'}
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  display: 'grid',
-                  placeItems: 'center',
-                  width: 20,
-                  height: 20,
-                }}
-              >
-                {isWide ? (
-                  <CloseFullscreenRoundedIcon sx={{ fontSize: 20 }} />
-                ) : (
-                  <OpenInFullRoundedIcon sx={{ fontSize: 20 }} />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </IconButton>
-        </motion.div>
+            <IconButton
+              onClick={toggleWideMode}
+              sx={{
+                display: { xs: 'none', md: 'inline-flex' },
+                padding: '10px',
+                bgcolor: alpha(theme.palette.background.default, 0.4),
+                backdropFilter: 'blur(12px) saturate(180%)',
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
+                color: 'text.secondary',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                  boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
+                  color: 'primary.main',
+                }
+              }}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={isWide ? 'wide' : 'narrow'}
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    display: 'grid',
+                    placeItems: 'center',
+                    width: 20,
+                    height: 20,
+                  }}
+                >
+                  {isWide ? (
+                    <CloseFullscreenRoundedIcon sx={{ fontSize: 20 }} />
+                  ) : (
+                    <OpenInFullRoundedIcon sx={{ fontSize: 20 }} />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </IconButton>
+          </motion.div>
+        </Tooltip>
 
         {/* Theme Toggle */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <IconButton
-            onClick={toggleColorMode}
-            sx={{
-              padding: '10px',
-              bgcolor: alpha(theme.palette.background.default, 0.4),
-              backdropFilter: 'blur(12px) saturate(180%)',
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-              boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
-              color: 'primary.main',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                borderColor: alpha(theme.palette.primary.main, 0.5),
-                boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
-              }
-            }}
+        <Tooltip title={theme.palette.mode === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'} placement="left">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={theme.palette.mode}
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{ display: 'flex' }}
-              >
-                {theme.palette.mode === 'dark' ? (
-                  <Sun size={20} strokeWidth={2.5} />
-                ) : (
-                  <Moon size={20} strokeWidth={2.5} />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </IconButton>
-        </motion.div>
+            <IconButton
+              onClick={(e) => toggleColorMode(e)}
+              sx={{
+                padding: '10px',
+                bgcolor: alpha(theme.palette.background.default, 0.4),
+                backdropFilter: 'blur(12px) saturate(180%)',
+                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
+                color: 'primary.main',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                  boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
+                }
+              }}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={theme.palette.mode}
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ display: 'flex' }}
+                >
+                  {theme.palette.mode === 'dark' ? (
+                    <Sun size={20} strokeWidth={2.5} />
+                  ) : (
+                    <Moon size={20} strokeWidth={2.5} />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </IconButton>
+          </motion.div>
+        </Tooltip>
       </Box>
     </Box>
   );

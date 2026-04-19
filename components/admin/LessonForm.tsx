@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react';
 import SaveIcon from '@mui/icons-material/Save';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Link from 'next/link';
+import { slugify } from '@/lib/slug';
 
 interface LessonFormProps {
   initialData?: any;
@@ -53,10 +54,7 @@ export default function LessonForm({ initialData, isEditing = false }: LessonFor
   // Auto-generate slug from title
   useEffect(() => {
     if (!isEditing && title && slugStatus === 'auto') {
-      const generatedSlug = title
-        .toLowerCase()
-        .replace(/[^a-z0-t0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+      const generatedSlug = slugify(title);
       setValue('slug', generatedSlug);
     }
   }, [title, setValue, isEditing, slugStatus]);

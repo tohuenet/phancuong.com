@@ -1,18 +1,19 @@
-import { Typography, Box, Stack, Button } from '@mui/material';
-import { getPostBySlug } from '@/lib/blog';
+import { Box, Button } from '@mui/material';
+import { getPostBySlug, getPostMetaBySlug } from '@/lib/blog';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense, ViewTransition } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { tokens } from '@/lib/theme-tokens';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PostArticleContent from '@/components/blog/PostArticleContent';
 import ArticleBodySkeleton from '@/components/blog/ArticleBodySkeleton';
 import PostDetailShell from '@/components/blog/PostDetailShell';
+import CommentSection from '@/components/blog/CommentSection';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
+import PostHeader from '@/components/blog/PostHeader';
+import ReadingProgressBar from '@/components/common/ReadingProgressBar';
+import ScrollToTop from '@/components/common/ScrollToTop';
 
 interface PostDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -20,13 +21,13 @@ interface PostDetailPageProps {
 
 export async function generateMetadata({ params }: PostDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPostMetaBySlug(slug);
 
   if (!post) return { title: 'Post Not Found' };
 
   return {
-    title: `${post.title} | Phan Cuong Blog`,
-    description: post.excerpt || 'Technical article by Phan Cuong',
+    title: `${post.title} | phancuong.com`,
+    description: post.excerpt || 'Technical article and exploration.',
     openGraph: {
       title: post.title,
       description: post.excerpt || '',
@@ -38,15 +39,11 @@ export async function generateMetadata({ params }: PostDetailPageProps): Promise
 
 export default async function PostDetailPage({ params }: PostDetailPageProps) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
-
-  if (!post) notFound();
-
-  const transitionNames = getPostViewTransitionNames(post.slug);
-  const primaryTag = post.tags[0] ?? { name: 'general', slug: 'general' };
 
   return (
     <PostDetailShell>
+        <ReadingProgressBar />
+        <ScrollToTop />
         <Box sx={{ mb: 5 }}>
           <Link href="/" transitionTypes={['nav-back']} style={{ textDecoration: 'none' }}>
             <Button
@@ -75,83 +72,56 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           </Link>
         </Box>
 
-        <Box component="header" sx={{ mb: 5 }}>
-          <ViewTransition name={transitionNames.title} share="post-header-shared">
-            <Typography
-              variant="h4"
-              className="title-text"
-              sx={{
-                fontWeight: 850,
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                color: 'text.primary',
-                textTransform: 'uppercase',
-                transition: 'color 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                mb: 2,
-              }}
-            >
-              {post.title}
-            </Typography>
-          </ViewTransition>
-
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none' }}>
-              <ViewTransition name={transitionNames.tag} share="post-header-shared">
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'primary.main',
-                    fontWeight: 800,
-                    textTransform: 'lowercase',
-                    letterSpacing: '0.05em',
-                    transition: 'opacity 0.2s ease',
-                    '&:hover': {
-                      opacity: 0.8,
-                      textDecoration: 'underline',
-                    },
-                  }}
-                >
-                  #{primaryTag.name}
-                </Typography>
-              </ViewTransition>
-            </Link>
-
-            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
-
-            <ViewTransition name={transitionNames.publishedAt} share="post-header-shared">
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: vi })}
-              </Typography>
-            </ViewTransition>
-
-            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
-
-            <ViewTransition name={transitionNames.readingTime} share="post-header-shared">
-              <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
-                <AccessTimeIcon sx={{ fontSize: '0.8rem', opacity: 0.7 }} />
-                <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                  {post.readingTime}
-                </Typography>
-              </Stack>
-            </ViewTransition>
-          </Stack>
-        </Box>
+        {/* Granular Suspense for Header (Title rising up) */}
+        <Suspense fallback={<Box sx={{ height: 100, opacity: 0 }} />}>
+          <HeaderLoader slug={slug} />
+        </Suspense>
 
         <Box component="article">
+          {/* Granular Suspense for Body (Skeleton) */}
           <Suspense
             fallback={
-              <ViewTransition name={`post-${post.slug}-body`} exit="post-body-exit">
+              <ViewTransition name={`post-${slug}-body`} exit="post-body-exit">
                 <ArticleBodySkeleton />
               </ViewTransition>
             }
           >
-            <ViewTransition name={`post-${post.slug}-body`} enter="post-body-enter" default="none">
-              <PostArticleContent content={post.content} />
-            </ViewTransition>
+            <ArticleBodyLoader slug={slug} />
           </Suspense>
         </Box>
+
+        {/* Comment Section can also be lazy or rendered with metadata */}
+        <Suspense fallback={null}>
+          <CommentsLoader slug={slug} />
+        </Suspense>
     </PostDetailShell>
   );
+}
+
+// Independent Metadata/Header Loader
+async function HeaderLoader({ slug }: { slug: string }) {
+  const postMeta = await getPostMetaBySlug(slug);
+  if (!postMeta) notFound();
+
+  const transitionNames = getPostViewTransitionNames(postMeta.slug);
+  return <PostHeader post={postMeta} transitionNames={transitionNames} />;
+}
+
+// Independent Article Content Loader
+async function ArticleBodyLoader({ slug }: { slug: string }) {
+  const post = await getPostBySlug(slug);
+  if (!post) return null;
+
+  return (
+    <ViewTransition name={`post-${post.slug}-body`} enter="post-body-enter" default="none">
+      <PostArticleContent content={post.content} />
+    </ViewTransition>
+  );
+}
+
+// Independent Comments Loader
+async function CommentsLoader({ slug }: { slug: string }) {
+  const postMeta = await getPostMetaBySlug(slug);
+  if (!postMeta) return null;
+  return <CommentSection postSlug={postMeta.slug} />;
 }

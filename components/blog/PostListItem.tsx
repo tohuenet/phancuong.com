@@ -20,6 +20,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
+import { motion } from 'framer-motion';
+import { tokens } from '@/lib/theme-tokens';
 
 interface PostListItemProps {
   post: {
@@ -43,19 +45,52 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
   const primaryTag = post.tags[0] ?? { name: 'general', slug: 'general' };
 
   return (
-    <Box
-      sx={{
-        py: 3,
-        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
-        position: 'relative',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          '& .action-buttons': { opacity: 1, transform: 'translateX(0)' },
-          '& .title-text': { color: 'primary.main' }
-        }
-      }}
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
     >
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+      <Box
+        sx={{
+          py: 3,
+          px: 2,
+          mx: -2,
+          borderRadius: tokens.radius.md,
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
+          position: 'relative',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflow: 'hidden',
+          '&:hover': {
+            bgcolor: alpha(theme.palette.primary.main, 0.02),
+            transform: 'translateX(4px)',
+            '& .action-buttons': { opacity: 1, transform: 'translateX(0)' },
+            '& .title-text': { color: 'primary.main' },
+            '& .glint': {
+              left: '125%',
+            }
+          }
+        }}
+      >
+        {/* Premium Glint Effect */}
+        <Box
+          className="glint"
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: '-25%',
+            width: '25%',
+            height: '100%',
+            background: `linear-gradient(to right, transparent, ${alpha(theme.palette.primary.main, 0.05)}, transparent)`,
+            transform: 'skewX(-25deg)',
+            transition: 'left 0.7s ease-in-out',
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        />
+
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
         {/* Drag Handle (Admin only, during reorder) */}
         {isAdmin && post.isPinned && (
           <Box {...dragHandleProps} sx={{ cursor: 'grab', mt: 0.5, color: 'text.secondary', opacity: 0.3, '&:hover': { opacity: 1 } }}>
@@ -190,6 +225,7 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
           </Stack>
         )}
       </Stack>
-    </Box>
+      </Box>
+    </motion.div>
   );
 }

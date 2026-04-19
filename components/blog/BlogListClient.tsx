@@ -21,9 +21,11 @@ import { tokens } from '@/lib/theme-tokens';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { LayoutModeContext } from '../ThemeRegistry/ThemeContextProvider';
 import { useState, useMemo, useContext } from 'react';
 
+// ... (interfaces stay same)
 interface Tag {
   id: string;
   name: string;
@@ -31,7 +33,6 @@ interface Tag {
   _count: { posts: number };
 }
 
-// ... (interfaces stay same, but add isPinned to Post)
 interface Post {
   id: string;
   title: string;
@@ -55,9 +56,10 @@ interface BlogListClientProps {
 
 export default function BlogListClient({ posts: initialPosts, pages, currentPage, tags, loading }: BlogListClientProps) {
   const theme = useTheme();
+  const router = useRouter();
   const { data: session } = useSession();
   const { isWide } = useContext(LayoutModeContext);
-  // Sync internal state with props and partition using useMemo to avoid cascading renders
+  
   const { pinnedPosts: initialPinned, otherPosts: initialOthers } = useMemo(() => {
     const pinned = initialPosts.filter(p => p.isPinned).sort((a, b) => a.pinnedOrder - b.pinnedOrder);
     const others = initialPosts.filter(p => !p.isPinned);
@@ -67,7 +69,6 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
   const [pinnedPosts, setPinnedPosts] = useState<Post[]>(initialPinned);
   const [otherPosts, setOtherPosts] = useState<Post[]>(initialOthers);
 
-  // Sync internal state with props during render to avoid cascading renders
   const [prevInitial, setPrevInitial] = useState(initialPosts);
   if (initialPosts !== prevInitial) {
     setPrevInitial(initialPosts);
@@ -105,7 +106,6 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
       const res = await fetch(`/api/admin/posts/pin/${id}`, { method: 'POST' });
       if (res.ok) {
         const updated = await res.json();
-        // Update local state by partitioning again
         const allPosts = [...pinnedPosts, ...otherPosts].map(p => p.id === id ? { ...p, isPinned: updated.isPinned } : p);
         setPinnedPosts(allPosts.filter(p => p.isPinned).sort((a, b) => a.pinnedOrder - b.pinnedOrder));
         setOtherPosts(allPosts.filter(p => !p.isPinned));
@@ -127,6 +127,12 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
     } catch {
       console.error('Failed to sync order');
     }
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', value.toString());
+    router.push(url.pathname + url.search);
   };
 
   return (
@@ -156,9 +162,9 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
       </Box>
 
       {/* Pinned Posts Section */}
-      <AnimatePresence>
+      <Box sx={{ mb: 8 }}>
         {pinnedPosts.length > 0 && (
-          <Box key="pinned-section" sx={{ mb: 8 }}>
+          <>
             <Typography variant="overline" sx={{ color: 'primary.main', fontWeight: 900, mb: 2, display: 'block' }}>
               Bài viết nổi bật
             </Typography>
@@ -168,58 +174,72 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
               onReorder={handleReorder}
               style={{ listStyle: 'none', padding: 0 }}
             >
-              {pinnedPosts.map((post) => (
-                <Reorder.Item 
-                  key={post.id} 
-                  value={post}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <PostListItem 
-                    post={post} 
-                    isAdmin={!!session?.user} 
-                    onDelete={(id) => setDeleteId(id)}
-                    onPin={handlePin}
-                    dragHandleProps={{}} // Reorder.Item acts as handle by default or we can customize
-                  />
-                </Reorder.Item>
-              ))}
+              <AnimatePresence mode="popLayout">
+                {pinnedPosts.map((post) => (
+                  <Reorder.Item 
+                    key={post.id} 
+                    value={post}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    layout
+                  >
+                    <PostListItem 
+                      post={post} 
+                      isAdmin={!!session?.user} 
+                      onDelete={(id) => setDeleteId(id)}
+                      onPin={handlePin}
+                    />
+                  </Reorder.Item>
+                ))}
+              </AnimatePresence>
             </Reorder.Group>
-          </Box>
+          </>
         )}
+      </Box>
 
-        {/* Regular Posts Section */}
-        <Box key="regular-section">
-          {pinnedPosts.length > 0 && otherPosts.length > 0 && (
-             <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 900, mb: 2, display: 'block' }}>
-              Tất cả bài viết
-            </Typography>
-          )}
-          {otherPosts.length > 0 ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-              {otherPosts.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <PostListItem 
-                    post={post} 
-                    isAdmin={!!session?.user} 
-                    onDelete={(id) => setDeleteId(id)}
-                    onPin={handlePin}
-                  />
-                </motion.div>
-              ))}
-            </Box>
-          ) : !loading && pinnedPosts.length === 0 && (
-            <Box className="glass" sx={{ py: 8, textAlign: 'center', bgcolor: alpha(theme.palette.action.hover, 0.05) }}>
-              <Typography variant="h5" color="text.secondary" sx={{ fontWeight: 600 }}>Không tìm thấy bài viết nào.</Typography>
-            </Box>
+      {/* Regular Posts Section */}
+      <Box sx={{ minHeight: 400 }}>
+        {pinnedPosts.length > 0 && otherPosts.length > 0 && (
+            <Typography variant="overline" sx={{ color: 'text.secondary', fontWeight: 900, mb: 2, display: 'block' }}>
+            Tất cả bài viết
+          </Typography>
+        )}
+        
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <AnimatePresence mode="popLayout">
+            {otherPosts.map((post) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                layout
+                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+              >
+                <PostListItem 
+                  post={post} 
+                  isAdmin={!!session?.user} 
+                  onDelete={(id) => setDeleteId(id)}
+                  onPin={handlePin}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {!loading && pinnedPosts.length === 0 && otherPosts.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <Box className="glass" sx={{ py: 8, textAlign: 'center', bgcolor: alpha(theme.palette.action.hover, 0.05) }}>
+                <Typography variant="h5" color="text.secondary" sx={{ fontWeight: 600 }}>Không tìm thấy bài viết nào.</Typography>
+              </Box>
+            </motion.div>
           )}
         </Box>
-      </AnimatePresence>
+      </Box>
 
       {/* Pagination */}
       {pages > 1 && (
@@ -229,17 +249,13 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
             page={currentPage}
             color="primary"
             size="large"
-            onChange={(_, value) => {
-              const url = new URL(window.location.href);
-              url.searchParams.set('page', value.toString());
-              window.location.href = url.toString();
-            }}
+            onChange={handlePageChange}
             sx={{ '& .MuiPaginationItem-root': { borderRadius: tokens.radius.sm, fontWeight: 700 } }}
           />
         </Box>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Admin Dialogs & Snakbars stay same... */}
       <Dialog 
         open={!!deleteId} 
         onClose={() => !deleting && setDeleteId(null)}
@@ -265,7 +281,6 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
         </DialogActions>
       </Dialog>
 
-      {/* Persistence Feedback */}
       <Snackbar 
         open={snackbar.open} 
         autoHideDuration={4000} 

@@ -4,6 +4,7 @@ import React from 'react';
 import { Box, alpha } from '@mui/material';
 import { tokens } from '@/lib/theme-tokens';
 import ImageLightbox from '@/components/common/ImageLightbox';
+import ScrollReveal from '@/components/common/ScrollReveal';
 
 interface HTMLContentProps {
   html: string;
@@ -145,6 +146,9 @@ export default function HTMLContent({ html }: HTMLContentProps) {
       <Box
         onClick={handleContentClick}
         sx={{
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          hyphens: 'auto',
           '& p': {
             mb: 4, 
             lineHeight: 1.9, 
@@ -189,7 +193,9 @@ export default function HTMLContent({ html }: HTMLContentProps) {
               fontFamily: tokens.typography.fontFamily.serif,
               color: 'text.primary', 
               opacity: 0.8,
-              lineHeight: 1.6
+              lineHeight: 1.6,
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word'
             },
           },
           '& img': {

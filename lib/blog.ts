@@ -1,6 +1,7 @@
-import prisma from './prisma';
+import { PostsDB, SeriesDB } from './storage';
 import readingTime from 'reading-time';
-import { unstable_cache } from 'next/cache';
+import { revalidateTag } from 'next/cache';
+import { cache } from 'react';
 
 export const BLOG_CACHE_TAGS = {
   posts: 'posts',
@@ -41,7 +42,7 @@ export interface PostWithReadingTime {
   } | null;
 }
 
-async function _getPublishedPosts(params: {
+export async function getPublishedPosts(params: {
   tag?: string;
   search?: string;
   page?: number;
@@ -50,92 +51,42 @@ async function _getPublishedPosts(params: {
   const { tag, search, page = 1, limit = 10 } = params;
   const skip = (page - 1) * limit;
 
-  // Search logic using PostgreSQL Full-Text Search with ranking
-  if (search) {
-    const formattedSearch = search.trim().split(/\s+/).join(' & ');
-    
-    const posts: any[] = await prisma.$queryRaw`
-      SELECT 
-        p.*,
-        ts_rank(
-          to_tsvector('english', p.title || ' ' || p.content), 
-          to_tsquery('english', ${formattedSearch})
-        ) as rank
-      FROM "Post" p
-      LEFT JOIN "_PostToTag" pt ON p.id = pt."A"
-      LEFT JOIN "Tag" t ON pt."B" = t.id
-      WHERE 
-        p."published" = true AND p."deletedAt" IS NULL
-        AND (
-          to_tsvector('english', p.title || ' ' || p.content) @@ to_tsquery('english', ${formattedSearch})
-          OR t.name ILIKE ${'%' + search + '%'}
-        )
-      GROUP BY p.id
-      ORDER BY rank DESC, p."createdAt" DESC
-      LIMIT ${limit} OFFSET ${skip}
-    `;
+  let allPosts = await PostsDB.getAll();
+  
+  // Filter published and non-deleted
+  allPosts = allPosts.filter(p => p.published && !p.deletedAt);
 
-    const countResult: any[] = await prisma.$queryRaw`
-      SELECT COUNT(DISTINCT p.id) as count
-      FROM "Post" p
-      LEFT JOIN "_PostToTag" pt ON p.id = pt."A"
-      LEFT JOIN "Tag" t ON pt."B" = t.id
-      WHERE 
-        p."published" = true AND p."deletedAt" IS NULL
-        AND (
-          to_tsvector('english', p.title || ' ' || p.content) @@ to_tsquery('english', ${formattedSearch})
-          OR t.name ILIKE ${'%' + search + '%'}
-        )
-    `;
-    
-    const total = Number(countResult[0]?.count || 0);
-
-    return {
-      posts: posts.map((post) => ({
-        ...post,
-        readingTime: readingTime(post.content).text,
-      })),
-      total,
-      pages: Math.ceil(total / limit),
-    };
-  }
-
-  // Fallback to standard Prisma query
-  const where: any = {
-    published: true,
-    deletedAt: null,
-  };
-
+  // Tag filter
   if (tag) {
-    where.tags = {
-      some: {
-        slug: tag,
-      },
-    };
+    if (tag === 'general') {
+      allPosts = allPosts.filter(p => !p.tags || p.tags.length === 0 || p.tags.some((t: any) => t.slug === 'general'));
+    } else {
+      allPosts = allPosts.filter(p => p.tags?.some((t: any) => t.slug === tag));
+    }
   }
 
-  const [posts, total] = await Promise.all([
-    prisma.post.findMany({
-      where,
-      orderBy: [
-        { isPinned: 'desc' },
-        { pinnedOrder: 'asc' },
-        { createdAt: 'desc' },
-      ],
-      include: {
-        tags: true,
-        author: {
-          select: { name: true, image: true },
-        },
-      },
-      skip,
-      take: limit,
-    }),
-    prisma.post.count({ where }),
-  ]);
+  // Search filter
+  if (search) {
+    const s = search.toLowerCase();
+    allPosts = allPosts.filter(p => 
+      p.title.toLowerCase().includes(s) || 
+      p.content.toLowerCase().includes(s) ||
+      p.tags?.some((t: any) => t.name.toLowerCase().includes(s))
+    );
+  }
+
+  // Sort
+  allPosts.sort((a, b) => {
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+    if (a.isPinned && a.pinnedOrder !== b.pinnedOrder) return a.pinnedOrder - b.pinnedOrder;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const total = allPosts.length;
+  const paginatedPosts = allPosts.slice(skip, skip + limit);
 
   return {
-    posts: posts.map((post) => ({
+    posts: paginatedPosts.map(post => ({
       ...post,
       readingTime: readingTime(post.content).text,
     })),
@@ -144,87 +95,84 @@ async function _getPublishedPosts(params: {
   };
 }
 
-/**
- * Hydrates a post object by converting string dates back to Date objects.
- * This is necessary because unstable_cache serializes data to JSON.
- */
-function hydratePost(post: any): PostWithReadingTime {
-  return {
-    ...post,
-    createdAt: new Date(post.createdAt),
-    updatedAt: new Date(post.updatedAt),
-  };
-}
+export const getPostBySlug = cache(async (slug: string): Promise<PostWithReadingTime | null> => {
+  const post = await PostsDB.getBySlug(slug);
+  if (!post || !post.published || post.deletedAt) return null;
 
-export const getPublishedPosts = async (params: {
-  tag?: string;
-  search?: string;
-  page?: number;
-  limit?: number;
-}) => {
-  const data = await unstable_cache(
-    async () => _getPublishedPosts(params),
-    ['published-posts', JSON.stringify(params)],
-    { tags: [BLOG_CACHE_TAGS.posts], revalidate: 3600 }
-  )();
-
-  return {
-    ...data,
-    posts: data.posts.map(hydratePost),
-  };
-};
-
-async function _getPostBySlug(slug: string): Promise<PostWithReadingTime | null> {
-  const post = await prisma.post.findUnique({
-    where: { slug, deletedAt: null },
-    include: {
-      tags: true,
-      series: {
-        include: {
-          posts: {
-            where: { published: true, deletedAt: null },
-            orderBy: { order: 'asc' },
-            select: { id: true, title: true, slug: true }
-          }
-        }
-      },
-      author: {
-        select: { name: true, image: true },
-      },
-    },
-  });
-
-  if (!post || !post.published) return null;
+  // Hydrate series if needed
+  let series = null;
+  if (post.seriesId) {
+    const s = await SeriesDB.getById(post.seriesId);
+    if (s) {
+      const allPosts = await PostsDB.getAll();
+      series = {
+        ...s,
+        posts: allPosts
+          .filter(p => p.seriesId === s.id && p.published && !p.deletedAt)
+          .sort((a, b) => a.order - b.order)
+          .map(p => ({ id: p.id, title: p.title, slug: p.slug }))
+      };
+    }
+  }
 
   return {
     ...post,
+    series,
     readingTime: readingTime(post.content).text,
   };
-}
+});
 
-export const getPostBySlug = async (slug: string) => {
-  const post = await unstable_cache(
-    () => _getPostBySlug(slug),
-    ['post-by-slug', slug],
-    { tags: [BLOG_CACHE_TAGS.posts, BLOG_CACHE_TAGS.post(slug)], revalidate: 3600 }
-  )();
+export const getPostMetaBySlug = cache(async (slug: string): Promise<Omit<PostWithReadingTime, 'content'> | null> => {
+  const post = await PostsDB.getBySlug(slug);
+  if (!post || !post.published || post.deletedAt) return null;
 
-  return post ? hydratePost(post) : null;
-};
+  const { content, ...meta } = post;
+  return {
+    ...meta,
+    readingTime: readingTime(content || '').text,
+  } as any;
+});
 
-async function _getAllTags(): Promise<TagWithCount[]> {
-  return prisma.tag.findMany({
-    orderBy: { name: 'asc' },
-    include: {
-      _count: {
-        select: { posts: { where: { published: true, deletedAt: null } } },
-      },
-    },
+export async function getAllTags(): Promise<TagWithCount[]> {
+  const allPosts = await PostsDB.getAll();
+  const publishedPosts = allPosts.filter(p => p.published && !p.deletedAt);
+  
+  const tagMap = new Map<string, TagWithCount>();
+  let untaggedCount = 0;
+
+  publishedPosts.forEach(post => {
+    if (!post.tags || post.tags.length === 0) {
+      untaggedCount++;
+      return;
+    }
+
+    post.tags?.forEach((tag: any) => {
+      if (!tagMap.has(tag.slug)) {
+        tagMap.set(tag.slug, {
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+          _count: { posts: 0 }
+        });
+      }
+      tagMap.get(tag.slug)!._count.posts++;
+    });
   });
-}
 
-export const getAllTags = unstable_cache(
-  _getAllTags,
-  ['all-tags'],
-  { tags: [BLOG_CACHE_TAGS.tags, BLOG_CACHE_TAGS.posts], revalidate: 3600 }
-);
+  // If there are untagged posts, add or merge into the virtual 'general' tag
+  if (untaggedCount > 0) {
+    const existingGeneral = tagMap.get('general');
+    if (existingGeneral) {
+      existingGeneral._count.posts += untaggedCount;
+    } else {
+      tagMap.set('general', {
+        id: 'virtual-general',
+        name: 'general',
+        slug: 'general',
+        _count: { posts: untaggedCount }
+      });
+    }
+  }
+
+  return Array.from(tagMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
