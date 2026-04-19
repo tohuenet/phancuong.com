@@ -126,7 +126,7 @@ export default function AppShell({ children }: AppShellProps) {
               component="span"
               sx={{ 
                 fontWeight: 300, 
-                letterSpacing: '0.1em',
+                letterSpacing: '0.02em',
                 fontSize: '1.25rem',
                 color: 'text.secondary',
                 opacity: 0.8
@@ -138,10 +138,10 @@ export default function AppShell({ children }: AppShellProps) {
               component="span"
               sx={{ 
                 fontWeight: 900, 
-                letterSpacing: '0.05em',
+                letterSpacing: '0.02em',
                 fontSize: '1.25rem',
                 color: 'primary.main',
-                ml: 0.5
+                ml: 0
               }}
             >
               CUONG
@@ -153,7 +153,8 @@ export default function AppShell({ children }: AppShellProps) {
                 height: 4, 
                 bgcolor: 'primary.main', 
                 borderRadius: '50%',
-                mx: 0.8,
+                ml: 0.2,
+                mr: 0.3,
                 mb: 0.4,
                 transition: 'all 0.3s ease',
                 boxShadow: `0 0 8px ${alpha(theme.palette.primary.main, 0.3)}`
@@ -164,7 +165,7 @@ export default function AppShell({ children }: AppShellProps) {
               component="span"
               sx={{ 
                 fontWeight: 700, 
-                letterSpacing: '0.15em',
+                letterSpacing: '0.05em',
                 fontSize: '0.75rem',
                 color: 'text.primary',
                 opacity: 0.4,
