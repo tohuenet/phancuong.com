@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { motion, AnimatePresence } from 'framer-motion';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
+import { useFeedback } from '../Providers/FeedbackProvider';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -28,8 +29,40 @@ export default function AppShell({ children }: AppShellProps) {
   const theme = useTheme();
   const { toggleColorMode } = React.useContext(ColorModeContext);
   const { isWide, toggleWideMode } = React.useContext(LayoutModeContext);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const { notify } = useFeedback();
+  const prevStatus = React.useRef(status);
   const isAdminPath = pathname?.startsWith('/admin');
+
+  // Track session changes for login/logout notifications
+  React.useEffect(() => {
+    const isLoginPending = sessionStorage.getItem('auth_welcome_pending') === 'true';
+    const isLogoutPending = sessionStorage.getItem('auth_logout_pending') === 'true';
+
+    if (status === 'authenticated' && session?.user && isLoginPending) {
+      notify(`Chào mừng trở lại, ${session.user.name}!`, 'success');
+      sessionStorage.removeItem('auth_welcome_pending');
+    }
+
+    if (status === 'unauthenticated' && isLogoutPending) {
+      notify('Đã đăng xuất thành công. Hẹn gặp lại!', 'success');
+      sessionStorage.removeItem('auth_logout_pending');
+    }
+
+    prevStatus.current = status;
+  }, [status, session, notify]);
+
+  const handleSignOut = async () => {
+    notify('Đang đăng xuất...', 'info');
+    sessionStorage.setItem('auth_logout_pending', 'true');
+    await signOut({ redirect: true, callbackUrl: '/' });
+  };
+
+  const handleSignIn = () => {
+    sessionStorage.setItem('auth_welcome_pending', 'true');
+    notify('Đang chuyển hướng đến Google...', 'info');
+    signIn('google');
+  };
 
   if (isAdminPath) {
     return (
@@ -317,7 +350,7 @@ export default function AppShell({ children }: AppShellProps) {
               <Tooltip title="Đăng nhập" placement="left">
                 <IconButton
                   aria-label="Đăng nhập bằng Google"
-                  onClick={() => signIn('google')}
+                  onClick={handleSignIn}
                   sx={{
                     padding: '10px',
                     bgcolor: alpha(theme.palette.background.default, 0.4),
@@ -384,7 +417,7 @@ export default function AppShell({ children }: AppShellProps) {
                 <Tooltip title="Đăng xuất" placement="left">
                   <IconButton
                     aria-label="Đăng xuất"
-                    onClick={() => signOut()}
+                    onClick={handleSignOut}
                     sx={{
                       padding: '10px',
                       bgcolor: alpha(theme.palette.background.default, 0.4),

@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { useSession, signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useFeedback } from '@/components/Providers/FeedbackProvider';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import SendRoundedIcon from '@mui/icons-material/SendRounded';
@@ -55,6 +56,7 @@ interface CommentSectionProps {
 export default function CommentSection({ postSlug }: CommentSectionProps) {
   const { data: session } = useSession();
   const theme = useTheme();
+  const { confirm, notify } = useFeedback();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -142,6 +144,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
       if (res.ok) {
         const created = await res.json();
         setComments(prev => [created, ...prev]);
+        notify('Đã đăng bình luận thành công!', 'success');
         if (rootParentId) {
           setReplyToId(null);
           setReplyContent('');
@@ -150,10 +153,14 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
         }
       } else {
         const data = await res.json();
-        setError(data.error || 'Không thể đăng bình luận.');
+        const msg = data.error || 'Không thể đăng bình luận.';
+        setError(msg);
+        notify(msg, 'error');
       }
     } catch (err) {
-      setError('Đã có lỗi xảy ra. Vui lòng thử lại.');
+      const msg = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+      setError(msg);
+      notify(msg, 'error');
     } finally {
       setSubmittingId(null);
     }
@@ -172,28 +179,38 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
         const updated = await res.json();
         setComments(comments.map(c => c.id === id ? updated : c));
         setEditingId(null);
+        notify('Đã cập nhật bình luận.', 'success');
       }
     } catch (err) {
-      setError('Failed to update comment');
+      notify('Không thể cập nhật bình luận.', 'error');
     } finally {
       setSubmittingId(null);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa bình luận này?')) return;
+    const isConfirmed = await confirm({
+      message: 'Bạn có chắc chắn muốn xóa bình luận này? Hành động này không thể hoàn tác.',
+      severity: 'error',
+      confirmText: 'Xóa ngay',
+      cancelText: 'Để sau'
+    });
+    
+    if (!isConfirmed) return;
+    
     try {
       const res = await fetch(`/api/blog/${postSlug}/comments/${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {
         setComments(comments.filter(c => c.id !== id && c.parentId !== id));
+        notify('Đã xóa bình luận thành công.', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'Failed to delete comment');
+        notify(data.error || 'Không thể xóa bình luận.', 'error');
       }
     } catch (err) {
-      setError('Failed to delete comment');
+      notify('Đã xảy ra lỗi khi xóa bình luận.', 'error');
     }
   };
 
@@ -257,9 +274,12 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                 <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'text.primary', fontSize: isReply ? '0.85rem' : '0.95rem' }}>
                   {comment.authorName}
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', opacity: 0.4 }}>
-                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: vi })}
-                </Typography>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary', opacity: 0.4 }}>
+                  <HistoryRoundedIcon sx={{ fontSize: '0.8rem' }} />
+                  <Typography variant="caption">
+                    {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: vi }).replace(/^khoảng\s/, '')}
+                  </Typography>
+                </Stack>
                 {isEdited && (
                   <Typography variant="caption" sx={{ color: 'text.secondary', opacity: 0.3, fontStyle: 'italic' }}>
                     (đã chỉnh sửa)

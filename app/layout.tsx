@@ -3,6 +3,8 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import AuthProvider from '@/components/Providers/AuthProvider';
 import ThemeContextProvider from '@/components/ThemeRegistry/ThemeContextProvider';
 import AppShell from '@/components/layout/AppShell';
+import FeedbackProvider from '@/components/Providers/FeedbackProvider';
+import { Toaster } from 'sonner';
 import Box from '@mui/material/Box';
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -48,9 +50,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <AppRouterCacheProvider>
             <ThemeContextProvider>
-              <AppShell>
-                {children}
-              </AppShell>
+              <FeedbackProvider>
+                <AppShell>
+                  {children}
+                </AppShell>
+                <Toaster position="top-right" expand={false} />
+              </FeedbackProvider>
             </ThemeContextProvider>
           </AppRouterCacheProvider>
         </AuthProvider>

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import { CommentsDB } from '@/lib/storage';
 
 // Helper to strip HTML tags
@@ -13,7 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -27,7 +26,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const isAdmin = (session.user as any).isAdmin;
+    const isAdmin = (session.user as any)?.isAdmin;
     const isOwner = session.user?.email === comment.authorEmail;
 
     if (!isAdmin && !isOwner) {
@@ -66,7 +65,7 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -78,7 +77,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const isAdmin = (session.user as any).isAdmin;
+    const isAdmin = (session.user as any)?.isAdmin;
     const isOwner = session.user?.email === comment.authorEmail;
 
     if (!isAdmin && !isOwner) {

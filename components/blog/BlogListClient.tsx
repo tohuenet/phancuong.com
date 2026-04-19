@@ -6,15 +6,9 @@ import {
   Pagination,
   alpha,
   useTheme,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Snackbar,
-  Alert
+  Button
 } from '@mui/material';
+import { useFeedback } from '@/components/Providers/FeedbackProvider';
 import PostListItem from '@/components/blog/PostListItem';
 import BlogSearchFilter from '@/components/blog/BlogSearchFilter';
 import { tokens } from '@/lib/theme-tokens';
@@ -68,6 +62,7 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
 
   const [pinnedPosts, setPinnedPosts] = useState<Post[]>(initialPinned);
   const [otherPosts, setOtherPosts] = useState<Post[]>(initialOthers);
+  const { confirm, notify } = useFeedback();
 
   const [prevInitial, setPrevInitial] = useState(initialPosts);
   if (initialPosts !== prevInitial) {
@@ -76,28 +71,25 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
     setOtherPosts(initialOthers);
   }
 
-  // Admin Action States
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({
-    open: false, message: '', severity: 'success'
-  });
+  const handleDelete = async (id: string) => {
+    const isConfirmed = await confirm({
+      title: 'Xóa bài viết?',
+      message: 'Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.',
+      severity: 'error',
+      confirmText: 'Xác nhận xóa'
+    });
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    setDeleting(true);
+    if (!isConfirmed) return;
+
     try {
-      const res = await fetch(`/api/admin/posts/${deleteId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/posts/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        setPinnedPosts(prev => prev.filter(p => p.id !== deleteId));
-        setOtherPosts(prev => prev.filter(p => p.id !== deleteId));
-        setSnackbar({ open: true, message: 'Xóa bài viết thành công.', severity: 'success' });
+        setPinnedPosts(prev => prev.filter(p => p.id !== id));
+        setOtherPosts(prev => prev.filter(p => p.id !== id));
+        notify('Xóa bài viết thành công.', 'success');
       } else throw new Error();
     } catch {
-      setSnackbar({ open: true, message: 'Không thể xóa bài viết.', severity: 'error' });
-    } finally {
-      setDeleting(false);
-      setDeleteId(null);
+      notify('Không thể xóa bài viết.', 'error');
     }
   };
 
@@ -109,10 +101,10 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
         const allPosts = [...pinnedPosts, ...otherPosts].map(p => p.id === id ? { ...p, isPinned: updated.isPinned } : p);
         setPinnedPosts(allPosts.filter(p => p.isPinned).sort((a, b) => a.pinnedOrder - b.pinnedOrder));
         setOtherPosts(allPosts.filter(p => !p.isPinned));
-        setSnackbar({ open: true, message: updated.isPinned ? 'Đã ghim bài viết.' : 'Đã bỏ ghim.', severity: 'success' });
+        notify(updated.isPinned ? 'Đã ghim bài viết.' : 'Đã bỏ ghim.', 'success');
       }
     } catch {
-      setSnackbar({ open: true, message: 'Lỗi khi ghim bài viết.', severity: 'error' });
+      notify('Lỗi khi ghim bài viết.', 'error');
     }
   };
 
@@ -184,10 +176,10 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
                     exit={{ opacity: 0, scale: 0.95 }}
                     layout
                   >
-                    <PostListItem 
-                      post={post} 
-                      isAdmin={!!session?.user} 
-                      onDelete={(id) => setDeleteId(id)}
+                    <PostListItem
+                      post={post}
+                      isAdmin={!!session?.user}
+                      onDelete={handleDelete}
                       onPin={handlePin}
                     />
                   </Reorder.Item>
@@ -217,12 +209,12 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
                 layout
                 transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
               >
-                <PostListItem 
-                  post={post} 
-                  isAdmin={!!session?.user} 
-                  onDelete={(id) => setDeleteId(id)}
-                  onPin={handlePin}
-                />
+                  <PostListItem
+                    post={post}
+                    isAdmin={!!session?.user}
+                    onDelete={handleDelete}
+                    onPin={handlePin}
+                  />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -254,42 +246,6 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
           />
         </Box>
       )}
-
-      {/* Admin Dialogs & Snakbars stay same... */}
-      <Dialog 
-        open={!!deleteId} 
-        onClose={() => !deleting && setDeleteId(null)}
-        slotProps={{ paper: { sx: { borderRadius: tokens.radius.lg, p: 2 } } }}
-      >
-        <DialogTitle sx={{ fontWeight: 900 }}>Xóa bài viết?</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ fontWeight: 500 }}>
-            Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteId(null)} disabled={deleting} sx={{ fontWeight: 700 }}>Hủy</Button>
-          <Button 
-            onClick={handleDelete} 
-            color="error" 
-            variant="contained" 
-            disabled={deleting}
-            sx={{ borderRadius: tokens.radius.md, fontWeight: 800 }}
-          >
-            {deleting ? 'Đang xóa...' : 'Xác nhận xóa'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar 
-        open={snackbar.open} 
-        autoHideDuration={4000} 
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert severity={snackbar.severity} sx={{ borderRadius: tokens.radius.md }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

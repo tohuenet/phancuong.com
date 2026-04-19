@@ -4,12 +4,10 @@ import { PostsDB } from '@/lib/storage';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import { Suspense, ViewTransition } from 'react';
 import { tokens } from '@/lib/theme-tokens';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import PostArticleContent from '@/components/blog/PostArticleContent';
 import ArticleBodySkeleton from '@/components/blog/ArticleBodySkeleton';
 import PostDetailShell from '@/components/blog/PostDetailShell';
@@ -18,6 +16,7 @@ import { getPostViewTransitionNames } from '@/lib/post-view-transition';
 import PostHeader from '@/components/blog/PostHeader';
 import ReadingProgressBar from '@/components/common/ReadingProgressBar';
 import ScrollToTop from '@/components/common/ScrollToTop';
+import PremiumScrollUp from '@/components/common/PremiumScrollUp';
 
 interface PostDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -120,6 +119,52 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
         </Box>
 
         <CommentSection postSlug={slug} />
+
+        <Box 
+          sx={{ 
+            mt: 8, 
+            pb: 10, 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            pt: 6,
+            position: 'relative'
+          }}
+        >
+          <Link href="/" transitionTypes={['nav-back']} style={{ textDecoration: 'none' }}>
+            <Button
+              startIcon={<ArrowBackRoundedIcon sx={{ fontSize: '1.2rem', transition: 'transform 0.2s' }} />}
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                fontFamily: tokens.typography.fontFamily.serif,
+                p: 0,
+                minWidth: 0,
+                textTransform: 'none',
+                opacity: 0.75,
+                '&:hover': {
+                  color: 'primary.main',
+                  bgcolor: 'transparent',
+                  opacity: 1,
+                  '& .MuiButton-startIcon': {
+                    transform: 'translateX(-4px)',
+                  },
+                },
+              }}
+            >
+              Về trang chủ
+            </Button>
+          </Link>
+
+          <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+            <PremiumScrollUp />
+          </Box>
+
+          <Box sx={{ width: 100, display: { xs: 'none', sm: 'block' } }} />
+        </Box>
     </PostDetailShell>
   );
 }
@@ -184,9 +229,11 @@ async function ArticleBodyLoader({ slug }: { slug: string }) {
   );
 }
 
+import PostDetailAdminActions from '@/components/blog/PostDetailAdminActions';
+
 // Independent Edit Button Loader
 async function EditButtonLoader({ slug }: { slug: string }) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
 
   if (!isAdmin) return null;
@@ -195,27 +242,11 @@ async function EditButtonLoader({ slug }: { slug: string }) {
   if (!post) return null;
 
   return (
-    <Link href={`/admin/posts/edit/${post.id}`} style={{ textDecoration: 'none' }}>
-      <Button
-        variant="outlined"
-        startIcon={<EditRoundedIcon sx={{ fontSize: '1.2rem' }} />}
-        sx={{
-          color: 'primary.main',
-          borderColor: alpha(tokens.color.primary, 0.2),
-          fontWeight: 700,
-          fontSize: '0.85rem',
-          textTransform: 'none',
-          borderRadius: '8px',
-          px: 3,
-          '&:hover': {
-            borderColor: 'primary.main',
-            bgcolor: alpha(tokens.color.primary, 0.05),
-          },
-        }}
-      >
-        Sửa bài viết
-      </Button>
-    </Link>
+    <PostDetailAdminActions 
+      id={post.id} 
+      slug={post.slug} 
+      initialIsPinned={post.isPinned} 
+    />
   );
 }
 

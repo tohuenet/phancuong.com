@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { tokens } from '@/lib/theme-tokens';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { motion } from 'framer-motion';
 
 interface PostHeaderProps {
@@ -37,6 +38,7 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
             className="title-text"
             sx={{
               fontWeight: 850,
+              fontSize: { xs: '1.5rem', sm: '2.125rem' },
               lineHeight: 1.2,
               letterSpacing: '-0.02em',
               color: 'text.primary',
@@ -45,14 +47,25 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
               display: 'flex',
               alignItems: 'center',
               mb: 2,
+              wordBreak: 'break-word',
             }}
           >
             {post.title}
           </Typography>
         </ViewTransition>
 
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none' }}>
+        <Stack 
+          direction="row" 
+          spacing={1} 
+          sx={{ 
+            alignItems: 'center',
+            flexWrap: 'nowrap',
+            width: '100%',
+            overflow: 'hidden',
+            '& > *': { minWidth: 0 }
+          }}
+        >
+            <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
               <Typography
                 variant="caption"
                 sx={{
@@ -60,6 +73,7 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
                   fontWeight: 800,
                   textTransform: 'lowercase',
                   letterSpacing: '0.05em',
+                  whiteSpace: 'nowrap',
                   transition: 'opacity 0.2s ease',
                   '&:hover': {
                     opacity: 0.8,
@@ -70,18 +84,52 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
                 #{primaryTag.name}
               </Typography>
             </Link>
-
-            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
-
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: vi })}
-            </Typography>
-
-            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
-
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
-            <AccessTimeIcon sx={{ fontSize: '0.8rem', opacity: 0.7 }} />
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+ 
+            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3, flexShrink: 0 }} />
+ 
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{
+                alignItems: 'center',
+                color: 'text.secondary',
+                flexShrink: 1,
+                overflow: 'hidden'
+              }}
+            >
+              <CalendarMonthIcon sx={{ fontSize: '0.8rem', opacity: 0.7, flexShrink: 0 }} />
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: vi }).replace(/^khoảng\s/, '')}
+              </Typography>
+            </Stack>
+ 
+            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3, flexShrink: 0 }} />
+ 
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{
+              alignItems: 'center',
+              color: 'text.secondary',
+              flexShrink: 0
+            }}
+          >
+            <AccessTimeIcon sx={{ fontSize: '0.8rem', opacity: 0.7, flexShrink: 0 }} />
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                whiteSpace: 'nowrap'
+              }}
+            >
               {post.readingTime}
             </Typography>
           </Stack>

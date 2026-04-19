@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { PremiumToast, ToastType } from '@/components/ui/PremiumToast';
 
 interface ConfirmOptions {
   title?: string;
@@ -73,10 +74,10 @@ export default function FeedbackProvider({ children }: { children: React.ReactNo
     }
   };
 
-  const notify = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    if (type === 'success') toast.success(message);
-    else if (type === 'error') toast.error(message);
-    else toast(message);
+  const notify = useCallback((message: string, type: ToastType = 'success') => {
+    toast.custom(() => (
+      <PremiumToast message={message} type={type} />
+    ));
   }, []);
 
   return (

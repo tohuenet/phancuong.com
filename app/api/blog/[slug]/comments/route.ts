@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import { CommentsDB, PostsDB } from '@/lib/storage';
 import { sendCommentNotification } from '@/lib/mail';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,7 +16,7 @@ export async function GET(
   const { slug } = await params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
 
     const allComments = await CommentsDB.getAll();
@@ -57,7 +56,7 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized. Please sign in to comment.' }, { status: 401 });

@@ -31,6 +31,7 @@ interface PostCardProps {
     title: string;
     slug: string;
     excerpt: string | null;
+    isPinned: boolean;
     createdAt: Date | string;
     readingTime: string;
     tags: Array<{ name: string; slug: string }>;
@@ -39,9 +40,10 @@ interface PostCardProps {
   featured?: boolean;
   isAdmin?: boolean;
   onDelete?: (id: string) => void;
+  onPin?: (id: string) => void;
 }
 
-export default function PostCard({ post, featured, isAdmin, onDelete }: PostCardProps) {
+export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: PostCardProps) {
   const theme = useTheme();
   const router = useRouter();
   const transitionNames = getPostViewTransitionNames(post.slug);
@@ -94,6 +96,26 @@ export default function PostCard({ post, featured, isAdmin, onDelete }: PostCard
               border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
             }}
           >
+            <Tooltip title={post.isPinned ? "Bỏ ghim" : "Ghim bài viết"}>
+              <IconButton 
+                size="small" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onPin?.(post.id);
+                }}
+                sx={{ 
+                  color: post.isPinned ? 'primary.main' : 'inherit',
+                  '& svg': {
+                    transform: post.isPinned ? 'rotate(90deg)' : 'none',
+                    transition: 'transform 0.3s ease'
+                  },
+                  '&:hover': { color: 'primary.main' }
+                }}
+              >
+                <PushPinIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Chỉnh sửa">
               <IconButton 
                 size="small" 

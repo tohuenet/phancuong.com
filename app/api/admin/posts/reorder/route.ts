@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { PostsDB } from '@/lib/storage';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import { revalidateTag } from 'next/cache';
 import { BLOG_CACHE_TAGS } from '@/lib/blog';
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return new NextResponse('Unauthorized', { status: 401 });
     }

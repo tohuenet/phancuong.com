@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/auth';
 import { PostsDB } from '@/lib/storage';
 import { revalidateTag } from 'next/cache';
 import { BLOG_CACHE_TAGS } from '@/lib/blog';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   
   // Security Check
-  if (!session || (session.user as any)?.email !== process.env.ALLOWED_EMAIL) {
+  if (!session || session.user?.email !== process.env.ALLOWED_EMAIL) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -26,8 +25,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as any)?.email !== process.env.ALLOWED_EMAIL) {
+  const session = await auth();
+  if (!session || session.user?.email !== process.env.ALLOWED_EMAIL) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

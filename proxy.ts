@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { auth } from '@/auth';
 
 // Rate limiting map: Map<IP, { count: number, resetTime: number }>
 const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
@@ -38,15 +38,15 @@ export async function proxy(request: NextRequest) {
 
   // 2. Admin Route Protection
   if (pathname.startsWith('/admin')) {
-    const token = await getToken({ req: request });
+    const session = await auth();
     const allowedEmail = process.env.ALLOWED_EMAIL;
 
     // Strict check: Must be logged in AND must match the allowed email
-    if (!token || (allowedEmail && token.email !== allowedEmail)) {
+    if (!session || (allowedEmail && session.user?.email !== allowedEmail)) {
       const url = request.nextUrl.clone();
       
       // If not logged in, redirect to signin
-      if (!token) {
+      if (!session) {
         url.pathname = '/api/auth/signin';
       } else {
         // If logged in but not authorized, redirect to unauthorized page
