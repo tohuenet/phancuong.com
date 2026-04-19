@@ -1,16 +1,14 @@
 import { MetadataRoute } from 'next';
-import prisma from '@/lib/prisma';
+import { PostsDB } from '@/lib/storage';
 
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://phancuong.com';
 
-  // 1. Fetch all dynamic content
-  const posts = await prisma.post.findMany({ 
-    where: { published: true, deletedAt: null }, 
-    select: { slug: true, updatedAt: true } 
-  });
+  // 1. Fetch all dynamic content from FileStorage
+  const allPosts = await PostsDB.getAll();
+  const posts = allPosts.filter(p => p.published && !p.deletedAt);
 
   // 2. Static Routes
   // Only home page is needed as /blog is now home

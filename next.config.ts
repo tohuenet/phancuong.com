@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
   experimental: {
     viewTransition: true,
   },
-  serverExternalPackages: ['@prisma/client', 'pg'],
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [

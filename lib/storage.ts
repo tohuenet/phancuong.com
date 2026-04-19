@@ -3,8 +3,12 @@ import path from 'path';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 
-// Singleton cache to avoid re-reading all files on every slug lookup
-const storageCache: Record<string, any[]> = {};
+// Singleton cache to avoid re-reading all files on every slug lookup.
+// Stored on globalThis so it is shared across Next.js's separate RSC / route-handler
+// module graphs in dev — otherwise invalidation on one graph leaves the other stale.
+const globalForStorage = globalThis as unknown as { __storageCache?: Record<string, any[]> };
+const storageCache: Record<string, any[]> =
+  globalForStorage.__storageCache ?? (globalForStorage.__storageCache = {});
 
 export class FileStorage<T extends { id: string; slug?: string }> {
   private collectionPath: string;

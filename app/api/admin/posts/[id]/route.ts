@@ -50,8 +50,8 @@ export async function PATCH(
       tags
     });
 
-    revalidateTag(BLOG_CACHE_TAGS.posts);
-    revalidateTag(BLOG_CACHE_TAGS.tags);
+    revalidateTag(BLOG_CACHE_TAGS.posts, 'max');
+    revalidateTag(BLOG_CACHE_TAGS.tags, 'max');
     
     return NextResponse.json(updatedPost);
   } catch (error) {
@@ -81,8 +81,8 @@ export async function DELETE(
       deletedAt: new Date()
     });
 
-    revalidateTag(BLOG_CACHE_TAGS.posts);
-    revalidateTag(BLOG_CACHE_TAGS.tags);
+    revalidateTag(BLOG_CACHE_TAGS.posts, 'max');
+    revalidateTag(BLOG_CACHE_TAGS.tags, 'max');
     
     return NextResponse.json({ success: true });
   } catch (error) {

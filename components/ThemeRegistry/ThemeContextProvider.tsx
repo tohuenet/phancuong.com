@@ -25,7 +25,10 @@ declare module '@mui/material/styles' {
 
 import { tokens } from '@/lib/theme-tokens';
 
-export const ColorModeContext = React.createContext({ toggleColorMode: () => {} });
+type ToggleColorMode = (event?: React.MouseEvent | { x: number; y: number }) => void;
+export const ColorModeContext = React.createContext<{ toggleColorMode: ToggleColorMode }>({
+  toggleColorMode: () => {},
+});
 export const LayoutModeContext = React.createContext({ isWide: false, toggleWideMode: () => {} });
 
 export default function ThemeContextProvider({ children }: { children: React.ReactNode }) {

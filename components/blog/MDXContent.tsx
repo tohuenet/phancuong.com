@@ -6,7 +6,6 @@ import { Typography, Box, Link as MuiLink, useTheme, alpha, Button } from '@mui/
 import Link from 'next/link';
 import { tokens } from '@/lib/theme-tokens';
 import ImageLightbox from '@/components/common/ImageLightbox';
-import ScrollReveal from '@/components/common/ScrollReveal';
 
 interface MDXContentProps {
   source: MDXRemoteSerializeResult;
@@ -66,24 +65,27 @@ const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>)
       component="div"
       sx={{
         my: 6,
-        '& pre': { 
-          m: 0, 
+        borderRadius: '12px',
+        overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+        '& pre': {
+          m: 0,
           bgcolor: 'transparent !important',
-        }
+          color: '#e6edf3',
+        },
       }}
     >
-      <Box 
-        className="terminal-header" 
-        sx={{ 
-          display: 'flex', 
+      <Box
+        className="terminal-header"
+        sx={{
+          display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           px: 2,
-          py: 0.5,
-          bgcolor: alpha('#fff', 0.05),
-          borderRadius: '12px 12px 0 0',
-          border: `1px solid ${alpha(tokens.color.primary, 0.1)}`,
-          borderBottom: 'none'
+          py: 0.75,
+          bgcolor: '#1a1e24',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -91,33 +93,29 @@ const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>)
           <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#ffbd2e' }} />
           <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#27c93f' }} />
         </Box>
-        
-        <Button 
+
+        <Button
           onClick={handleCopy}
           size="small"
-          sx={{ 
-            color: copied ? 'primary.main' : 'text.secondary', 
-            fontSize: '0.65rem', 
+          sx={{
+            color: copied ? 'primary.light' : 'rgba(255,255,255,0.7)',
+            fontSize: '0.65rem',
             fontWeight: 700,
             textTransform: 'none',
             minWidth: 0,
             p: 0,
-            opacity: 0.8,
-            transition: 'all 0.2s',
-            '&:hover': { opacity: 1, bgcolor: 'transparent' }
+            transition: 'color 0.2s',
+            '&:hover': { color: '#fff', bgcolor: 'transparent' },
           }}
         >
           {copied ? 'Copied!' : 'Copy'}
         </Button>
       </Box>
-      <Box 
-        component="div" 
-        className="glass" 
-        sx={{ 
-          border: `1px solid ${alpha(tokens.color.primary, 0.1)}`, 
-          borderRadius: '0 0 12px 12px', 
-          borderTop: 'none',
-          overflow: 'hidden'
+      <Box
+        component="div"
+        sx={{
+          bgcolor: '#0d1117',
+          overflow: 'hidden',
         }}
       >
         <pre ref={preRef} {...props}>
@@ -130,72 +128,64 @@ const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>)
 
 const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
   h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <ScrollReveal>
-      <Typography 
-        variant="h3" 
-        component="h1" 
-        sx={{ 
-          mt: 10, mb: 4, 
-          fontWeight: 600, 
-          fontFamily: tokens.typography.fontFamily.serif,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.2,
-          color: 'text.primary'
-        }} 
-        {...props} 
-      />
-    </ScrollReveal>
+    <Typography
+      variant="h3"
+      component="h1"
+      sx={{
+        mt: 10, mb: 4,
+        fontWeight: 600,
+        fontFamily: tokens.typography.fontFamily.serif,
+        letterSpacing: '-0.02em',
+        lineHeight: 1.2,
+        color: 'text.primary'
+      }}
+      {...props}
+    />
   ),
   h2: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <ScrollReveal>
-      <Typography 
-        variant="h4" 
-        component="h2" 
-        sx={{ 
-          mt: 8, mb: 3, 
-          fontWeight: 600, 
-          fontFamily: tokens.typography.fontFamily.serif,
-          letterSpacing: '-0.01em',
-          lineHeight: 1.3,
-          color: 'text.primary'
-        }} 
-        {...props} 
-      />
-    </ScrollReveal>
+    <Typography
+      variant="h4"
+      component="h2"
+      sx={{
+        mt: 8, mb: 3,
+        fontWeight: 600,
+        fontFamily: tokens.typography.fontFamily.serif,
+        letterSpacing: '-0.01em',
+        lineHeight: 1.3,
+        color: 'text.primary'
+      }}
+      {...props}
+    />
   ),
   h3: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
-    <ScrollReveal>
-      <Typography 
-        variant="h5" 
-        component="h3" 
-        sx={{ 
-          mt: 6, mb: 2, 
-          fontWeight: 600, 
-          fontFamily: tokens.typography.fontFamily.serif,
-          lineHeight: 1.4,
-          color: 'text.primary'
-        }} 
-        {...props} 
-      />
-    </ScrollReveal>
+    <Typography
+      variant="h5"
+      component="h3"
+      sx={{
+        mt: 6, mb: 2,
+        fontWeight: 600,
+        fontFamily: tokens.typography.fontFamily.serif,
+        lineHeight: 1.4,
+        color: 'text.primary'
+      }}
+      {...props}
+    />
   ),
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <ScrollReveal>
-      <Typography 
-        variant="body1" 
-        sx={{ 
-          mb: 4, 
-          lineHeight: 1.9, 
-          fontSize: '1.3rem',
-          fontFamily: tokens.typography.fontFamily.serif,
-          color: 'text.secondary',
-          fontWeight: 400,
-          wordBreak: 'break-word',
-          overflowWrap: 'break-word'
-        }} 
-        {...props} 
-      />
-    </ScrollReveal>
+    <Typography
+      variant="body1"
+      sx={{
+        mb: 4,
+        lineHeight: 1.9,
+        fontSize: '1.3rem',
+        fontFamily: tokens.typography.fontFamily.serif,
+        color: 'text.secondary',
+        fontWeight: 400,
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word'
+      }}
+      {...props}
+    />
   ),
   a: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
     const normalizedHref = normalizeHref(href);
@@ -249,36 +239,30 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
     );
   },
   blockquote: (props: React.BlockquoteHTMLAttributes<HTMLQuoteElement>) => (
-    <ScrollReveal>
-      <Box
-        component="blockquote"
-        sx={{
-          borderLeft: '4px solid',
-          borderColor: 'primary.main',
-          pl: 5,
-          py: 1.5,
-          my: 10,
-          '& p': { 
-            mb: 0, 
-            fontStyle: 'italic', 
-            fontSize: '1.5rem', 
-            fontFamily: tokens.typography.fontFamily.serif,
-            color: 'text.primary', 
-            opacity: 0.8,
-            lineHeight: 1.6,
-            wordBreak: 'break-word',
-            overflowWrap: 'break-word'
-          },
-        }}
-        {...props}
-      />
-    </ScrollReveal>
+    <Box
+      component="blockquote"
+      sx={{
+        borderLeft: '4px solid',
+        borderColor: 'primary.main',
+        pl: 5,
+        py: 1.5,
+        my: 10,
+        '& p': {
+          mb: 0,
+          fontStyle: 'italic',
+          fontSize: '1.5rem',
+          fontFamily: tokens.typography.fontFamily.serif,
+          color: 'text.primary',
+          opacity: 0.8,
+          lineHeight: 1.6,
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word'
+        },
+      }}
+      {...props}
+    />
   ),
-  pre: (props: any) => (
-    <ScrollReveal>
-      <CodeBlock {...props} />
-    </ScrollReveal>
-  ),
+  pre: (props: any) => <CodeBlock {...props} />,
   img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
     const { src, onClick, ...imgProps } = props;
     const normalizedSrc = typeof src === 'string' ? src : undefined;

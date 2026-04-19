@@ -33,10 +33,10 @@ export default function Error({
           Oops!
         </Typography>
         <Typography variant="h5">
-          Something went wrong in this section.
+          Đã có lỗi xảy ra ở phần này.
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          We&apos;ve logged the error and are looking into it.
+          Chúng tôi đã ghi nhận lỗi và đang xem xét.
         </Typography>
         <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
           <Button
@@ -44,14 +44,14 @@ export default function Error({
             onClick={() => reset()}
             sx={{ borderRadius: 2, px: 4 }}
           >
-            Try again
+            Thử lại
           </Button>
           <Button
             variant="outlined"
             onClick={() => window.location.href = '/'}
             sx={{ borderRadius: 2, px: 4 }}
           >
-            Go Home
+            Về trang chủ
           </Button>
         </Box>
       </Box>

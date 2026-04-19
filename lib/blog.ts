@@ -3,6 +3,11 @@ import readingTime from 'reading-time';
 import { revalidateTag } from 'next/cache';
 import { cache } from 'react';
 
+function readingTimeVi(content: string): string {
+  const minutes = Math.max(1, Math.round(readingTime(content || '').minutes));
+  return `${minutes} phút đọc`;
+}
+
 export const BLOG_CACHE_TAGS = {
   posts: 'posts',
   tags: 'tags',
@@ -88,7 +93,7 @@ export async function getPublishedPosts(params: {
   return {
     posts: paginatedPosts.map(post => ({
       ...post,
-      readingTime: readingTime(post.content).text,
+      readingTime: readingTimeVi(post.content),
     })),
     total,
     pages: Math.ceil(total / limit),
@@ -118,7 +123,7 @@ export const getPostBySlug = cache(async (slug: string): Promise<PostWithReading
   return {
     ...post,
     series,
-    readingTime: readingTime(post.content).text,
+    readingTime: readingTimeVi(post.content),
   };
 });
 
@@ -129,7 +134,7 @@ export const getPostMetaBySlug = cache(async (slug: string): Promise<Omit<PostWi
   const { content, ...meta } = post;
   return {
     ...meta,
-    readingTime: readingTime(content || '').text,
+    readingTime: readingTimeVi(content || ''),
   } as any;
 });
 

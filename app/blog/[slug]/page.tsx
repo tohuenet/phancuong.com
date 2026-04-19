@@ -1,11 +1,15 @@
-import { Box, Button } from '@mui/material';
+import { Box, Button, alpha } from '@mui/material';
 import { getPostBySlug, getPostMetaBySlug } from '@/lib/blog';
+import { PostsDB } from '@/lib/storage';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { Suspense, ViewTransition } from 'react';
 import { tokens } from '@/lib/theme-tokens';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import PostArticleContent from '@/components/blog/PostArticleContent';
 import ArticleBodySkeleton from '@/components/blog/ArticleBodySkeleton';
 import PostDetailShell from '@/components/blog/PostDetailShell';
@@ -23,7 +27,7 @@ export async function generateMetadata({ params }: PostDetailPageProps): Promise
   const { slug } = await params;
   const post = await getPostMetaBySlug(slug);
 
-  if (!post) return { title: 'Post Not Found' };
+  if (!post) return { title: 'Không tìm thấy bài viết' };
 
   return {
     title: `${post.title} | phancuong.com`,
@@ -44,7 +48,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     <PostDetailShell>
         <ReadingProgressBar />
         <ScrollToTop />
-        <Box sx={{ mb: 5 }}>
+        <Box sx={{ mb: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" transitionTypes={['nav-back']} style={{ textDecoration: 'none' }}>
             <Button
               startIcon={<ArrowBackRoundedIcon sx={{ fontSize: '1.2rem', transition: 'transform 0.2s' }} />}
@@ -67,9 +71,13 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
                 },
               }}
             >
-              Back to Home
+              Về trang chủ
             </Button>
           </Link>
+
+          <Suspense fallback={null}>
+            <EditButtonLoader slug={slug} />
+          </Suspense>
         </Box>
 
         {/* Granular Suspense for Header (Title rising up) */}
@@ -90,10 +98,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           </Suspense>
         </Box>
 
-        {/* Comment Section can also be lazy or rendered with metadata */}
-        <Suspense fallback={null}>
-          <CommentsLoader slug={slug} />
-        </Suspense>
+        <CommentSection postSlug={slug} />
     </PostDetailShell>
   );
 }
@@ -119,9 +124,38 @@ async function ArticleBodyLoader({ slug }: { slug: string }) {
   );
 }
 
-// Independent Comments Loader
-async function CommentsLoader({ slug }: { slug: string }) {
-  const postMeta = await getPostMetaBySlug(slug);
-  if (!postMeta) return null;
-  return <CommentSection postSlug={postMeta.slug} />;
+// Independent Edit Button Loader
+async function EditButtonLoader({ slug }: { slug: string }) {
+  const session = await getServerSession(authOptions);
+  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
+
+  if (!isAdmin) return null;
+
+  const post = await PostsDB.getBySlug(slug);
+  if (!post) return null;
+
+  return (
+    <Link href={`/admin/posts/edit/${post.id}`} style={{ textDecoration: 'none' }}>
+      <Button
+        variant="outlined"
+        startIcon={<EditRoundedIcon sx={{ fontSize: '1.2rem' }} />}
+        sx={{
+          color: 'primary.main',
+          borderColor: alpha(tokens.color.primary, 0.2),
+          fontWeight: 700,
+          fontSize: '0.85rem',
+          textTransform: 'none',
+          borderRadius: '8px',
+          px: 3,
+          '&:hover': {
+            borderColor: 'primary.main',
+            bgcolor: alpha(tokens.color.primary, 0.05),
+          },
+        }}
+      >
+        Sửa bài viết
+      </Button>
+    </Link>
+  );
 }
+

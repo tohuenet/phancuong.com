@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { PostsDB } from '@/lib/storage';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidateTag } from 'next/cache';
@@ -17,21 +17,16 @@ export async function POST(
 
     const { id } = await params;
 
-    const post = await prisma.post.findUnique({
-      where: { id },
-      select: { isPinned: true }
-    });
+    const post = await PostsDB.getById(id);
 
     if (!post) {
       return new NextResponse('Post not found', { status: 404 });
     }
 
-    const updatedPost = await prisma.post.update({
-      where: { id },
-      data: { 
-        isPinned: !post.isPinned,
-        pinnedOrder: post.isPinned ? 0 : 999 // New pins go to the end by default
-      }
+    const updatedPost = await PostsDB.save({
+      ...post,
+      isPinned: !post.isPinned,
+      pinnedOrder: post.isPinned ? 0 : 999 // New pins go to the end by default
     });
 
     revalidateTag(BLOG_CACHE_TAGS.posts, 'max');

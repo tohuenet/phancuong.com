@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { PostsDB } from '@/lib/storage';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { revalidateTag } from 'next/cache';
@@ -18,14 +18,17 @@ export async function POST(request: Request) {
       return new NextResponse('Invalid data', { status: 400 });
     }
 
-    // Update pinnedOrder for each post in the list
+    // Update pinnedOrder for each post in the list using FileStorage
     await Promise.all(
-      postIds.map((id, index) =>
-        prisma.post.update({
-          where: { id },
-          data: { pinnedOrder: index }
-        })
-      )
+      postIds.map(async (id, index) => {
+        const post = await PostsDB.getById(id);
+        if (post) {
+          await PostsDB.save({
+            ...post,
+            pinnedOrder: index
+          });
+        }
+      })
     );
 
     revalidateTag(BLOG_CACHE_TAGS.posts, 'max');

@@ -57,8 +57,8 @@ export async function POST(request: Request) {
       tags
     });
 
-    revalidateTag(BLOG_CACHE_TAGS.posts);
-    revalidateTag(BLOG_CACHE_TAGS.tags);
+    revalidateTag(BLOG_CACHE_TAGS.posts, 'max');
+    revalidateTag(BLOG_CACHE_TAGS.tags, 'max');
     
     return NextResponse.json(post);
   } catch (error) {

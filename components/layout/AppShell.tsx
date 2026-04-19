@@ -1,19 +1,22 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Container, Typography, useTheme, alpha, IconButton, Tooltip } from '@mui/material';
+import { Box, Container, Typography, useTheme, alpha, IconButton, Tooltip, Stack } from '@mui/material';
 import LiquidBackground from '../common/LiquidBackground';
 import { tokens } from '@/lib/theme-tokens';
 import { LayoutModeContext, ColorModeContext } from '../ThemeRegistry/ThemeContextProvider';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Sun, Moon } from 'lucide-react';
+import { useSession, signOut, signIn } from 'next-auth/react';
+import { LogIn, Sun, Moon } from 'lucide-react';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import EmailIcon from '@mui/icons-material/Email';
 import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
 import CloseFullscreenRoundedIcon from '@mui/icons-material/CloseFullscreenRounded';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSession, signOut } from 'next-auth/react';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -165,6 +168,28 @@ export default function AppShell({ children }: AppShellProps) {
         </Container>
       </Box>
 
+      {/* Premium Minimalist Footer */}
+      <Box 
+        component="footer" 
+        sx={{ 
+          py: 4, 
+          mt: 'auto',
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
+          position: 'relative',
+          zIndex: 1,
+          bgcolor: alpha(theme.palette.background.default, 0.2),
+          backdropFilter: 'blur(10px)',
+        }}
+      >
+        <Container maxWidth={false} sx={{ maxWidth: tokens.layout.contentWidth, px: { xs: 2, sm: 4, md: 6 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: '0.1em', opacity: 0.6 }}>
+              © {new Date().getFullYear()} PHANCUONG.COM
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+
       {/* Global Floating Glass Toggle */}
       <Box
         sx={{
@@ -189,7 +214,7 @@ export default function AppShell({ children }: AppShellProps) {
             >
               <Tooltip title="Đăng nhập" placement="left">
                 <IconButton
-                  onClick={(e) => toggleColorMode(e)}
+                  onClick={() => signIn('google')}
                   sx={{
                     padding: '10px',
                     bgcolor: alpha(theme.palette.background.default, 0.4),
@@ -205,7 +230,7 @@ export default function AppShell({ children }: AppShellProps) {
                     },
                   }}
                 >
-                  <LogoutIcon sx={{ fontSize: 20, transform: 'rotate(180deg)' }} />
+                  <LogIn size={20} />
                 </IconButton>
               </Tooltip>
             </motion.div>

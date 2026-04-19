@@ -5,9 +5,13 @@ import { Box, alpha } from '@mui/material';
 import { tokens } from '@/lib/theme-tokens';
 import ImageLightbox from '@/components/common/ImageLightbox';
 import ScrollReveal from '@/components/common/ScrollReveal';
+// `highlight.js/lib/common` bundles ~35 common languages (php, js/ts, py, go,
+// rust, bash, sql, html/css, json, yaml, etc.) instead of all 190+ languages.
+import hljs from 'highlight.js/lib/common';
+import 'highlight.js/styles/github-dark.css';
 
 interface HTMLContentProps {
-  html: string;
+  content: string;
 }
 
 const normalizeHref = (href: string): string => {
@@ -38,14 +42,63 @@ const normalizeHref = (href: string): string => {
   return `/blog/${cleanHref}`;
 };
 
-export default function HTMLContent({ html }: HTMLContentProps) {
+// Walk the hljs-highlighted DOM tree and split it into one HTML string per line,
+// re-opening any open <span class="hljs-*"> wrappers that straddle a newline so
+// each line is a self-contained fragment (required for the CSS counter-based
+// line-number rendering below).
+function highlightedHtmlToLines(highlightedHtml: string): string {
+  if (typeof document === 'undefined') return highlightedHtml;
+
+  const container = document.createElement('div');
+  container.innerHTML = highlightedHtml;
+
+  const escape = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const lines: string[] = [''];
+  const openStack: string[] = [];
+
+  const walk = (node: Node) => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const parts = (child.textContent || '').split('\n');
+        parts.forEach((part, i) => {
+          if (i > 0) {
+            // close all open tags on the current line, start a new line, reopen them
+            lines[lines.length - 1] += '</span>'.repeat(openStack.length);
+            lines.push(openStack.join(''));
+          }
+          lines[lines.length - 1] += escape(part);
+        });
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        const el = child as Element;
+        const cls = el.getAttribute('class') || '';
+        const openTag = `<span class="${cls}">`;
+        lines[lines.length - 1] += openTag;
+        openStack.push(openTag);
+        walk(el);
+        openStack.pop();
+        lines[lines.length - 1] += '</span>';
+      }
+    }
+  };
+
+  walk(container);
+
+  return lines
+    .map((line) => `<span data-line>${line.length ? line : ' '}</span>`)
+    .join('\n');
+}
+
+export default function HTMLContent({ content }: HTMLContentProps) {
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
 
   const { transformedHtml, imageSources } = React.useMemo(() => {
     const images: string[] = [];
 
-    const withEnhancedImages = html.replace(/<img\b[^>]*>/gi, (imgTag) => {
+    const withEnhancedImages = content.replace(/<img\b[^>]*>/gi, (imgTag) => {
       const srcMatch = imgTag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
       if (!srcMatch?.[1]) {
         return imgTag;
@@ -77,38 +130,39 @@ export default function HTMLContent({ html }: HTMLContentProps) {
       }
     );
 
-    // Transform Quill code blocks to macOS Terminal Code Blocks dynamically
+    // Transform Quill code blocks to macOS Terminal Code Blocks dynamically.
+    // The content is left as plain text inside <code data-highlight> and will be
+    // syntax-highlighted (with auto language detection) on the client in a useEffect.
     const transformed = withNormalizedLinks.replace(
       /<pre[^>]*>([\s\S]*?)<\/pre>/gi,
-      (match, content) => {
-        // Decode HTML entities so we can safely process the string and lines
-        const decodedContent = content;
-        // Split content into lines for CSS-based line numbering
-        const linesArray = decodedContent.split('\n');
-        if (linesArray[0] === '') linesArray.shift(); // Remove leading newline
-        if (linesArray[linesArray.length - 1] === '') linesArray.pop(); // Remove trailing newline
+      (_match, content) => {
+        // Strip zero-width-space workaround chars that were injected upstream to
+        // protect PHP/HTML processing-instruction-looking tokens during rendering.
+        const rawEscaped = String(content).replace(/\u200B/g, '');
 
-        const lines = linesArray
-          .map((line: string) => `<span data-line>${line || ' '}</span>`)
-          .join('\n');
+        // Trim a single leading/trailing newline (Quill often adds them)
+        const trimmed = rawEscaped.replace(/^\n/, '').replace(/\n$/, '');
 
         return `
-          <div class="terminal-wrapper" style="margin: 48px 0;">
-            <div class="terminal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px 12px 0 0; border: 1px solid rgba(136, 136, 136, 0.1); border-bottom: none;">
-              <div class="terminal-dots" style="display: flex; gap: 8px;">
-                <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
-                <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
-                <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
+          <div class="terminal-wrapper">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <div class="terminal-dot" data-dot="red"></div>
+                <div class="terminal-dot" data-dot="yellow"></div>
+                <div class="terminal-dot" data-dot="green"></div>
               </div>
-              <button 
-                onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText); this.innerText='Copied!'; setTimeout(() => { this.innerText='Copy'; }, 2000)"
-                style="background: transparent; border: none; color: rgba(255, 255, 255, 0.6); font-family: sans-serif; font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: all 0.2s; padding: 4px;"
-              >
-                Copy
-              </button>
+              <div class="terminal-meta">
+                <span data-lang-label class="terminal-lang"></span>
+                <button
+                  class="terminal-copy"
+                  onclick="navigator.clipboard.writeText(this.closest('.terminal-wrapper').querySelector('code').innerText); this.innerText='Copied!'; setTimeout(() => { this.innerText='Copy'; }, 2000)"
+                >
+                  Copy
+                </button>
+              </div>
             </div>
-            <div class="glass terminal-body" style="border: 1px solid rgba(136, 136, 136, 0.1); border-radius: 0 0 12px 12px; border-top: none; overflow: hidden; background: transparent;">
-              <pre style="margin: 0; padding: 16px 0; overflow-x: auto; background: transparent;"><code style="display: grid; min-width: 100%; counter-reset: line;">${lines}</code></pre>
+            <div class="terminal-body">
+              <pre><code data-highlight class="hljs">${trimmed}</code></pre>
             </div>
           </div>
         `;
@@ -119,7 +173,7 @@ export default function HTMLContent({ html }: HTMLContentProps) {
       transformedHtml: transformed,
       imageSources: images,
     };
-  }, [html]);
+  }, [content]);
 
   const handleContentClick = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
@@ -141,9 +195,53 @@ export default function HTMLContent({ html }: HTMLContentProps) {
     }
   }, []);
 
+  // Syntax highlight every code block inside the article after render.
+  // We use highlight.js's auto language detection so the author doesn't have to
+  // annotate code blocks (Quill's editor doesn't expose a language field).
+  React.useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+
+    const blocks = root.querySelectorAll<HTMLElement>('code[data-highlight]');
+    blocks.forEach((block) => {
+      if (block.dataset.highlighted === 'done') return;
+
+      // Use textContent so any HTML entities inside the pre (e.g. &lt;?php)
+      // are decoded back to real characters for the highlighter.
+      const source = (block.textContent || '').replace(/\u200B/g, '');
+      if (!source.trim()) {
+        block.dataset.highlighted = 'done';
+        return;
+      }
+
+      const result = hljs.highlightAuto(source);
+      const language = result.language;
+      const relevance = result.relevance;
+
+      // Low-confidence auto detection is usually noise — fall back to plain.
+      const highlightedHtml =
+        language && relevance >= 5
+          ? result.value
+          : source
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
+
+      block.innerHTML = highlightedHtmlToLines(highlightedHtml);
+      block.dataset.highlighted = 'done';
+
+      if (language && relevance >= 5) {
+        const wrapper = block.closest('.terminal-wrapper');
+        const label = wrapper?.querySelector<HTMLElement>('[data-lang-label]');
+        if (label) label.textContent = language;
+      }
+    });
+  }, [content]);
+
   return (
     <>
       <Box
+        ref={contentRef}
         onClick={handleContentClick}
         sx={{
           wordBreak: 'break-word',
@@ -220,10 +318,67 @@ export default function HTMLContent({ html }: HTMLContentProps) {
               color: 'text.secondary'
             }
           },
-          // Support for the dynamically injected spans
+          // Terminal MacOS-style code block — always dark, readable in both color schemes.
+          '& .terminal-wrapper': {
+            my: 6,
+            borderRadius: '12px',
+            overflow: 'hidden',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+            border: '1px solid rgba(255,255,255,0.08)',
+          },
+          '& .terminal-header': {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            px: 2,
+            py: 0.75,
+            background: '#1a1e24',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          },
+          '& .terminal-dots': { display: 'flex', gap: '8px' },
+          '& .terminal-dot': { width: 12, height: 12, borderRadius: '50%' },
+          '& .terminal-dot[data-dot="red"]': { background: '#ff5f56' },
+          '& .terminal-dot[data-dot="yellow"]': { background: '#ffbd2e' },
+          '& .terminal-dot[data-dot="green"]': { background: '#27c93f' },
+          '& .terminal-meta': { display: 'flex', alignItems: 'center', gap: '12px' },
+          '& .terminal-lang': {
+            color: 'rgba(255,255,255,0.5)',
+            fontFamily: 'sans-serif',
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          },
+          '& .terminal-copy': {
+            background: 'transparent',
+            border: 'none',
+            color: 'rgba(255,255,255,0.7)',
+            fontFamily: 'sans-serif',
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+            p: '4px',
+            '&:hover': { color: '#fff' },
+          },
+          '& .terminal-body': {
+            background: '#0d1117',
+            overflow: 'hidden',
+          },
+          '& .terminal-body pre': {
+            margin: 0,
+            padding: '16px 0',
+            overflowX: 'auto',
+            background: 'transparent',
+          },
           '& .terminal-body code': {
+            display: 'grid',
+            minWidth: '100%',
+            counterReset: 'line',
+            background: 'transparent',
             fontFamily: tokens.typography.fontFamily.mono,
-            fontSize: '0.85rem'
+            fontSize: '0.85rem',
+            color: '#e6edf3',
           },
           '& .terminal-body [data-line]::before': {
             counterIncrement: 'line',
@@ -232,10 +387,10 @@ export default function HTMLContent({ html }: HTMLContentProps) {
             width: '2.5rem',
             textAlign: 'right',
             mr: '1rem',
-            color: '#555',
+            color: 'rgba(255,255,255,0.25)',
             fontSize: '0.75rem',
             userSelect: 'none',
-            borderRight: `1px solid ${alpha('#fff', 0.05)}`
+            borderRight: `1px solid ${alpha('#fff', 0.08)}`,
           }
         }}
         dangerouslySetInnerHTML={{ __html: transformedHtml }}

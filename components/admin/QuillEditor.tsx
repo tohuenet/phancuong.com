@@ -52,9 +52,22 @@ export default function QuillEditor({ value, onChange, placeholder, id = 'new-po
     }
   }, [id, onChange, value]);
 
+  // Use a zero-width space after the opening bracket to prevent Quill/Browser 
+  // from stripping tags that look like Processing Instructions (<?php).
+  const transformedValue = React.useMemo(() => {
+    if (!value) return value;
+    return value
+      .replace(/&lt;\?/g, '&lt;\u200B?')
+      .replace(/&lt;!/g, '&lt;\u200B!');
+  }, [value]);
+
   const handleEditorChange = (content: string) => {
-    onChange(content);
-    localStorage.setItem(`quill_autosave_${id}`, content);
+    // We remove the zero-width space before saving to keep the data clean.
+    const cleanContent = content
+      .replace(/<\u200B\?/g, '<?')
+      .replace(/<\u200B!/g, '<!');
+    onChange(cleanContent);
+    localStorage.setItem(`quill_autosave_${id}`, cleanContent);
     setSaveStatus(true);
     setTimeout(() => setSaveStatus(false), 2000);
   };
@@ -113,7 +126,7 @@ export default function QuillEditor({ value, onChange, placeholder, id = 'new-po
       >
         <ReactQuill 
           theme="bubble"
-          value={value}
+          value={transformedValue}
           onChange={handleEditorChange}
           modules={modules}
           formats={formats}

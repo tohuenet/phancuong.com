@@ -69,8 +69,11 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [expandedAdminId, setExpandedAdminId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const isAdmin = (session?.user as any)?.isAdmin === true;
+  useEffect(() => { setMounted(true); }, []);
+
+  const isAdmin = mounted && (session?.user as any)?.isAdmin === true;
 
   // Organize comments into threads (Facebook Style: Level 1 Indentation)
   const threadedComments = useMemo(() => {
@@ -147,10 +150,10 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
         }
       } else {
         const data = await res.json();
-        setError(data.error || 'Failed to post comment');
+        setError(data.error || 'Không thể đăng bình luận.');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      setError('Đã có lỗi xảy ra. Vui lòng thử lại.');
     } finally {
       setSubmittingId(null);
     }
@@ -178,17 +181,28 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa bình luận này?')) return;
     try {
       const res = await fetch(`/api/blog/${postSlug}/comments/${id}`, {
         method: 'DELETE',
       });
       if (res.ok) {
         setComments(comments.filter(c => c.id !== id && c.parentId !== id));
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete comment');
       }
     } catch (err) {
       setError('Failed to delete comment');
     }
+  };
+
+  // Mask email for privacy
+  const maskEmail = (email: string) => {
+    if (isAdmin || session?.user?.email === email) return email;
+    const [name, domain] = email.split('@');
+    if (name.length <= 2) return `${name}***@${domain}`;
+    return `${name.substring(0, 2)}***${name.substring(name.length - 1)}@${domain}`;
   };
 
   // Helper to render a comment item
@@ -334,14 +348,21 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                 </Stack>
               </Box>
             ) : (
-              <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontSize: isReply ? '0.9rem' : '0.95rem' }}>
-                {hasMention && (
-                  <Box component="span" sx={{ color: 'primary.main', fontWeight: 700, mr: 0.5 }}>
-                    {mentionMatch[0]}
-                  </Box>
+              <>
+                <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontSize: isReply ? '0.9rem' : '0.95rem' }}>
+                  {hasMention && (
+                    <Box component="span" sx={{ color: 'primary.main', fontWeight: 700, mr: 0.5 }}>
+                      {mentionMatch[0]}
+                    </Box>
+                  )}
+                  {contentBody}
+                </Typography>
+                {(isAdmin || isOwner) && (
+                  <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'text.secondary', opacity: 0.6, fontSize: '0.7rem' }}>
+                    {maskEmail(comment.authorEmail)}
+                  </Typography>
                 )}
-                {contentBody}
-              </Typography>
+              </>
             )}
 
             {/* Reply Input */}
@@ -409,7 +430,8 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
           height: '1px', 
           background: `linear-gradient(90deg, transparent, ${alpha(theme.palette.divider, 0.1)}, transparent)`,
           marginBottom: '60px',
-          marginHorizontal: 'auto'
+          marginLeft: 'auto',
+          marginRight: 'auto',
         }}
       />
 
@@ -428,16 +450,16 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
           gap: 2
         }}
       >
-        <span>Conversation</span>
+        <span>Bình luận</span>
         <Box sx={{ height: 1, flexGrow: 1, bgcolor: 'divider', opacity: 0.5 }} />
         <Typography variant="caption" sx={{ opacity: 0.5, fontWeight: 600 }}>
-          {comments.length} Thoughts
+          {comments.length} ý kiến
         </Typography>
       </Typography>
 
       {/* Comment Input */}
-      <Box sx={{ p: 3, borderRadius: '12px', bgcolor: alpha(theme.palette.background.paper, 0.4), backdropFilter: 'blur(10px)', border: `1px solid ${alpha(theme.palette.divider, 0.1)}`, mb: 6 }}>
-        {session ? (
+      <Box sx={{ p: 3, borderRadius: '12px', bgcolor: alpha(theme.palette.background.paper, 0.4), backdropFilter: 'blur(10px)', border: `1px solid ${alpha(theme.palette.divider, 0.1)}`, mb: 6, minHeight: 120 }}>
+        {!mounted ? null : session ? (
           <form onSubmit={(e) => handleSubmit(e)}>
             <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
               <Avatar sx={{ 
@@ -456,7 +478,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                   fullWidth
                   multiline
                   rows={2}
-                  placeholder="Share your thoughts..."
+                  placeholder="Chia sẻ suy nghĩ của bạn..."
                   variant="standard"
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
@@ -474,14 +496,14 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                 endIcon={submittingId === 'main' ? <CircularProgress size={16} color="inherit" /> : <SendRoundedIcon />}
                 sx={{ borderRadius: '8px', px: 3, textTransform: 'none', fontWeight: 700 }}
               >
-                Post
+                Đăng
               </Button>
             </Box>
           </form>
         ) : (
           <Box sx={{ textAlign: 'center', py: 2 }}>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>Đăng nhập để bình luận.</Typography>
-            <Button variant="outlined" startIcon={<GoogleIcon />} onClick={() => signIn('google')} sx={{ borderRadius: '8px', px: 4, textTransform: 'none', fontWeight: 700 }}>Sign in with Google</Button>
+            <Button variant="outlined" startIcon={<GoogleIcon />} onClick={() => signIn('google')} sx={{ borderRadius: '8px', px: 4, textTransform: 'none', fontWeight: 700 }}>Đăng nhập bằng Google</Button>
           </Box>
         )}
       </Box>

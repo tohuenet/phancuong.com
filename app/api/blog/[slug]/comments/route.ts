@@ -17,12 +17,36 @@ export async function GET(
   const { slug } = await params;
 
   try {
+    const session = await getServerSession(authOptions);
+    const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
+
     const allComments = await CommentsDB.getAll();
     const postComments = allComments
       .filter(c => c.postSlug === slug)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return NextResponse.json(postComments);
+    // Mask emails and hide IP for non-admins for privacy
+    const sanitizedComments = postComments.map(c => {
+      const isOwner = session?.user?.email === c.authorEmail;
+      if (isAdmin || isOwner) return c;
+
+      const email = c.authorEmail || '';
+      const [name, domain] = email.split('@');
+      let maskedEmail = 'Author'; 
+      if (name && domain) {
+        maskedEmail = name.length <= 2 
+          ? `${name}***@${domain}` 
+          : `${name.substring(0, 2)}***${name.substring(name.length - 1)}@${domain}`;
+      }
+
+      return {
+        ...c,
+        authorEmail: maskedEmail,
+        ip: undefined, // Fully remove sensitive IP from non-admins
+      };
+    });
+
+    return NextResponse.json(sanitizedComments);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
   }

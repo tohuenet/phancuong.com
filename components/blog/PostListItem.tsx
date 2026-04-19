@@ -20,7 +20,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
-import { motion } from 'framer-motion';
 import { tokens } from '@/lib/theme-tokens';
 
 interface PostListItemProps {
@@ -45,26 +44,17 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
   const primaryTag = post.tags[0] ?? { name: 'general', slug: 'general' };
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-    >
       <Box
         sx={{
           py: 3,
-          px: 2,
-          mx: -2,
-          borderRadius: tokens.radius.md,
+          px: 1.5,
+          borderRadius: tokens.radius.xs,
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
           position: 'relative',
           transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden',
           '&:hover': {
             bgcolor: alpha(theme.palette.primary.main, 0.02),
-            transform: 'translateX(4px)',
             '& .action-buttons': { opacity: 1, transform: 'translateX(0)' },
             '& .title-text': { color: 'primary.main' },
             '& .glint': {
@@ -226,6 +216,5 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
         )}
       </Stack>
       </Box>
-    </motion.div>
   );
 }

@@ -11,7 +11,7 @@ interface FullPageLoaderProps {
 
 const FullPageLoader: React.FC<FullPageLoaderProps> = ({ 
   isLoading = true, 
-  message = "Loading platform..." 
+  message = "Đang tải..."
 }) => {
   const theme = useTheme();
 

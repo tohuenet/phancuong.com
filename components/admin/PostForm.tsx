@@ -100,8 +100,10 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
       });
 
       if (res.ok) {
+        const saved = await res.json();
         localStorage.removeItem(`quill_autosave_${isEditing ? initialData?.id : 'new-post'}`);
-        router.push('/');
+        const target = saved?.slug ? `/blog/${saved.slug}` : '/';
+        router.push(target);
         router.refresh();
       } else {
         const result = await res.json();
