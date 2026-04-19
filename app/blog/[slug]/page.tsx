@@ -29,14 +29,32 @@ export async function generateMetadata({ params }: PostDetailPageProps): Promise
 
   if (!post) return { title: 'Không tìm thấy bài viết' };
 
+  const canonicalPath = `/blog/${post.slug}`;
+  const ogImage = post.thumbnailUrl || undefined;
+
   return {
     title: `${post.title} | phancuong.com`,
     description: post.excerpt || 'Technical article and exploration.',
+    alternates: {
+      canonical: canonicalPath,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt || '',
       type: 'article',
+      url: canonicalPath,
       publishedTime: new Date(post.createdAt).toISOString(),
+      modifiedTime: new Date(post.updatedAt).toISOString(),
+      authors: post.author?.name ? [post.author.name] : undefined,
+      images: ogImage
+        ? [{ url: ogImage, width: 1200, height: 630, alt: post.title }]
+        : undefined,
+    },
+    twitter: {
+      card: ogImage ? 'summary_large_image' : 'summary',
+      title: post.title,
+      description: post.excerpt || '',
+      images: ogImage ? [ogImage] : undefined,
     },
   };
 }
@@ -46,6 +64,9 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
 
   return (
     <PostDetailShell>
+        <Suspense fallback={null}>
+          <ArticleSchema slug={slug} />
+        </Suspense>
         <ReadingProgressBar />
         <ScrollToTop />
         <Box sx={{ mb: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -103,6 +124,45 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
   );
 }
 
+// JSON-LD BlogPosting schema for rich results. Reuses the cached meta fetch
+// (`getPostMetaBySlug` is wrapped in React `cache()`), so no extra DB hit.
+async function ArticleSchema({ slug }: { slug: string }) {
+  const post = await getPostMetaBySlug(slug);
+  if (!post) return null;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://phancuong.com';
+  const url = `${siteUrl}/blog/${post.slug}`;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    headline: post.title,
+    description: post.excerpt || undefined,
+    image: post.thumbnailUrl || undefined,
+    datePublished: new Date(post.createdAt).toISOString(),
+    dateModified: new Date(post.updatedAt).toISOString(),
+    author: {
+      '@type': 'Person',
+      name: post.author?.name || 'phancuong.com',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'phancuong.com',
+      url: siteUrl,
+    },
+    keywords: post.tags?.map((t) => t.name).join(', ') || undefined,
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 // Independent Metadata/Header Loader
 async function HeaderLoader({ slug }: { slug: string }) {
   const postMeta = await getPostMetaBySlug(slug);
@@ -118,7 +178,7 @@ async function ArticleBodyLoader({ slug }: { slug: string }) {
   if (!post) return null;
 
   return (
-    <ViewTransition name={`post-${post.slug}-body`} enter="post-body-enter" default="none">
+    <ViewTransition name={`post-${post.slug}-body`} enter="post-body-enter" exit="post-body-exit" default="none">
       <PostArticleContent content={post.content} />
     </ViewTransition>
   );

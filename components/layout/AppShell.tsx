@@ -17,6 +17,7 @@ import CloseFullscreenRoundedIcon from '@mui/icons-material/CloseFullscreenRound
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { motion, AnimatePresence } from 'framer-motion';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -168,26 +169,127 @@ export default function AppShell({ children }: AppShellProps) {
         </Container>
       </Box>
 
-      {/* Premium Minimalist Footer */}
+      {/* Premium Floating Glass Dock Footer */}
       <Box 
         component="footer" 
         sx={{ 
-          py: 4, 
+          pb: 4, 
+          pt: 2,
           mt: 'auto',
-          borderTop: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
           position: 'relative',
-          zIndex: 1,
-          bgcolor: alpha(theme.palette.background.default, 0.2),
-          backdropFilter: 'blur(10px)',
+          zIndex: 10,
+          display: 'flex',
+          justifyContent: 'center',
+          px: { xs: 2, sm: 4 },
         }}
       >
-        <Container maxWidth={false} sx={{ maxWidth: tokens.layout.contentWidth, px: { xs: 2, sm: 4, md: 6 } }}>
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: '0.1em', opacity: 0.6 }}>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.8, ease: tokens.curves.standard }}
+        >
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: 'center', 
+              gap: { xs: 2, sm: 4 },
+              px: { xs: 3, sm: 4 }, 
+              py: 1.5, 
+              borderRadius: tokens.radius.xl,
+              bgcolor: alpha(theme.palette.background.default, theme.palette.mode === 'dark' ? 0.4 : 0.6),
+              backdropFilter: 'blur(20px) saturate(180%)',
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+              boxShadow: (t) => `
+                0 4px 20px ${alpha(t.palette.common.black, 0.08)},
+                inset 0 0 0 1px ${alpha(t.palette.common.white, 0.05)}
+              `,
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '1px',
+                background: `linear-gradient(90deg, transparent, ${alpha(theme.palette.primary.main, 0.3)}, transparent)`,
+              }
+            }}
+          >
+            {/* Copyright Section */}
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: 'text.secondary', 
+                fontWeight: 600, 
+                letterSpacing: '0.05em', 
+                opacity: 0.6,
+                fontSize: '0.7rem',
+                whiteSpace: 'nowrap'
+              }}
+            >
               © {new Date().getFullYear()} PHANCUONG.COM
             </Typography>
+
+            {/* Credit Section - Horizontal now */}
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1.5,
+                position: 'relative',
+                '&::before': {
+                  content: { xs: 'none', sm: '""' },
+                  position: 'absolute',
+                  left: -16,
+                  height: '12px',
+                  width: '1px',
+                  bgcolor: alpha(theme.palette.divider, 0.1)
+                }
+              }}
+            >
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: 'text.secondary', 
+                  fontFamily: tokens.typography.fontFamily.serif,
+                  fontStyle: 'italic',
+                  fontSize: '0.75rem',
+                  opacity: 0.8,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Made with passion for perfection
+              </Typography>
+              
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  filter: [
+                    `drop-shadow(0 0 0px ${alpha(theme.palette.primary.main, 0)})`,
+                    `drop-shadow(0 0 4px ${alpha(theme.palette.primary.main, 0.6)})`,
+                    `drop-shadow(0 0 0px ${alpha(theme.palette.primary.main, 0)})`
+                  ]
+                }}
+                transition={{ 
+                  duration: 2.5, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+              >
+                <FavoriteRoundedIcon 
+                  sx={{ 
+                    fontSize: 16, 
+                    color: 'primary.main', 
+                    display: 'block',
+                    filter: theme.palette.mode === 'dark' ? 'brightness(1.2)' : 'none'
+                  }} 
+                />
+              </motion.div>
+            </Box>
           </Box>
-        </Container>
+        </motion.div>
       </Box>
 
       {/* Global Floating Glass Toggle */}
@@ -214,6 +316,7 @@ export default function AppShell({ children }: AppShellProps) {
             >
               <Tooltip title="Đăng nhập" placement="left">
                 <IconButton
+                  aria-label="Đăng nhập bằng Google"
                   onClick={() => signIn('google')}
                   sx={{
                     padding: '10px',
@@ -248,6 +351,7 @@ export default function AppShell({ children }: AppShellProps) {
                 >
                   <Tooltip title="Bài viết mới" placement="left">
                     <IconButton
+                      aria-label="Tạo bài viết mới"
                       component={Link}
                       href="/admin/posts/new"
                       sx={{
@@ -279,6 +383,7 @@ export default function AppShell({ children }: AppShellProps) {
               >
                 <Tooltip title="Đăng xuất" placement="left">
                   <IconButton
+                    aria-label="Đăng xuất"
                     onClick={() => signOut()}
                     sx={{
                       padding: '10px',
@@ -313,6 +418,7 @@ export default function AppShell({ children }: AppShellProps) {
             whileTap={{ scale: 0.95 }}
           >
             <IconButton
+              aria-label={isWide ? 'Chuyển sang chế độ tập trung' : 'Chuyển sang chế độ mở rộng'}
               onClick={toggleWideMode}
               sx={{
                 display: { xs: 'none', md: 'inline-flex' },
@@ -365,6 +471,7 @@ export default function AppShell({ children }: AppShellProps) {
             whileTap={{ scale: 0.95 }}
           >
             <IconButton
+              aria-label={theme.palette.mode === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
               onClick={(e) => toggleColorMode(e)}
               sx={{
                 padding: '10px',

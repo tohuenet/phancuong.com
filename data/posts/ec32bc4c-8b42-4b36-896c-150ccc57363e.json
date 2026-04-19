@@ -15,5 +15,7 @@
       "name": "test",
       "slug": "test"
     }
-  ]
+  ],
+  "isPinned": false,
+  "pinnedOrder": 0
 }

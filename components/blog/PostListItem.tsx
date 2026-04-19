@@ -46,15 +46,19 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
   return (
       <Box
         sx={{
-          py: 3,
-          px: 1.5,
-          borderRadius: tokens.radius.xs,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
+          py: 2.5,
+          px: { xs: 2, md: 3 },
+          mb: 2,
+          borderRadius: `${tokens.radius.md}px`,
+          bgcolor: alpha(theme.palette.background.paper, 0.4),
+          backdropFilter: 'blur(10px)',
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           position: 'relative',
           transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden',
           '&:hover': {
-            bgcolor: alpha(theme.palette.primary.main, 0.02),
+            borderColor: alpha(theme.palette.primary.main, 0.25),
+            bgcolor: alpha(theme.palette.background.paper, 0.55),
             '& .action-buttons': { opacity: 1, transform: 'translateX(0)' },
             '& .title-text': { color: 'primary.main' },
             '& .glint': {
@@ -89,40 +93,39 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
         )}
 
         <Box sx={{ flexGrow: 1 }}>
-          {/* Title */}
-          <Link
-            href={`/blog/${post.slug}`}
-            prefetch={true}
-            transitionTypes={['post-open']}
-            style={{ textDecoration: 'none' }}
-          >
-            <ViewTransition name={transitionNames.title} share="post-header-shared">
-              <Typography 
-                variant="h4" 
-                className="title-text"
-                sx={{ 
-                  fontWeight: 850,
-                  lineHeight: 1.2,
-                  letterSpacing: '-0.02em',
-                  color: 'text.primary',
-                  textTransform: 'uppercase',
-                  transition: 'color 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-              >
-                {post.isPinned && (
-                  <PushPinIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'primary.main', transform: 'rotate(20deg)' }} />
-                )}
-                {post.title}
-              </Typography>
-            </ViewTransition>
-          </Link>
+            {/* Title */}
+            <Link
+              href={`/blog/${post.slug}`}
+              prefetch={true}
+              transitionTypes={['post-open']}
+              style={{ textDecoration: 'none' }}
+            >
+              <ViewTransition name={transitionNames.title} share="post-title-shared">
+                <Typography
+                  variant="h4"
+                  className="title-text"
+                  sx={{
+                    fontWeight: 850,
+                    lineHeight: 1.2,
+                    letterSpacing: '-0.02em',
+                    color: 'text.primary',
+                    textTransform: 'uppercase',
+                    transition: 'color 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  {post.isPinned && (
+                    <PushPinIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'primary.main', transform: 'rotate(20deg)' }} />
+                  )}
+                  {post.title}
+                </Typography>
+              </ViewTransition>
+            </Link>
 
-          {/* Metadata Row */}
-          <Stack direction="row" spacing={1.5} sx={{ mt: 1.5, alignItems: 'center' }}>
-            <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none' }}>
-              <ViewTransition name={transitionNames.tag} share="post-header-shared">
+            {/* Metadata Row */}
+            <Stack direction="row" spacing={1.5} sx={{ mt: 1.5, alignItems: 'center' }}>
+              <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none' }}>
                 <Typography 
                   variant="caption" 
                   sx={{ 
@@ -139,28 +142,23 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
                 >
                   #{primaryTag.name}
                 </Typography>
-              </ViewTransition>
-            </Link>
-            
-            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
-            
-            <ViewTransition name={transitionNames.publishedAt} share="post-header-shared">
+              </Link>
+              
+              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
+              
               <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                 {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: vi })}
               </Typography>
-            </ViewTransition>
 
-            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
+              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
 
-            <ViewTransition name={transitionNames.readingTime} share="post-header-shared">
               <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
                 <AccessTimeIcon sx={{ fontSize: '0.8rem', opacity: 0.7 }} />
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>
                   {post.readingTime}
                 </Typography>
               </Stack>
-            </ViewTransition>
-          </Stack>
+            </Stack>
         </Box>
 
         {/* Action Buttons (Admin Only) */}

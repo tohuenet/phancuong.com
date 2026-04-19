@@ -15,7 +15,6 @@
     "@mui/icons-material": "latest",
     "@mui/material": "latest",
     "@mui/material-nextjs": "latest",
-    "@mui/x-data-grid": "^9.0.2",
     "date-fns": "^4.1.0",
     "framer-motion": "latest",
     "highlight.js": "^11.11.1",

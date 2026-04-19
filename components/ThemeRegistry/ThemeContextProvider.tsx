@@ -37,13 +37,16 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
   const isThemeTransitioningRef = React.useRef(false);
 
   React.useEffect(() => {
-    // Check initial color mode and layout mode
+    // Initial initialization
     if (typeof window !== 'undefined') {
       const savedWideMode = localStorage.getItem('phancuong-is-wide-mode');
       if (savedWideMode === 'true') {
         setIsWide(true);
       }
     }
+  }, []);
+
+  React.useEffect(() => {
     document.documentElement.setAttribute('data-mui-color-scheme', mode);
   }, [mode]);
 
@@ -58,13 +61,12 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
     }
   }), [isWide]);
 
-  React.useEffect(() => {
-    document.documentElement.setAttribute('data-mui-color-scheme', mode);
-  }, [mode]);
 
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: (event?: React.MouseEvent | { x: number; y: number }) => {
+        if (isThemeTransitioningRef.current) return;
+
         if (typeof window === 'undefined' || typeof document === 'undefined') {
           setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
           return;
@@ -76,6 +78,8 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
           return;
         }
 
+        isThemeTransitioningRef.current = true;
+
         const x = event && 'clientX' in event ? event.clientX : (event as any)?.x ?? window.innerWidth / 2;
         const y = event && 'clientY' in event ? event.clientY : (event as any)?.y ?? window.innerHeight / 2;
         const endRadius = Math.hypot(
@@ -84,11 +88,12 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
         );
 
         const transition = doc.startViewTransition(async () => {
+          const nextMode = mode === 'light' ? 'dark' : 'light';
           flushSync(() => {
-            const nextMode = mode === 'light' ? 'dark' : 'light';
             setMode(nextMode);
-            document.documentElement.setAttribute('data-mui-color-scheme', nextMode);
           });
+          // Ensure attribute is set before the browser takes the new screenshot
+          document.documentElement.setAttribute('data-mui-color-scheme', nextMode);
         });
 
         transition.ready.then(() => {
@@ -104,7 +109,13 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
               easing: 'ease-in-out',
               pseudoElement: '::view-transition-new(root)',
             }
-          );
+          ).finished.finally(() => {
+            isThemeTransitioningRef.current = false;
+          });
+        });
+
+        transition.finished.finally(() => {
+          isThemeTransitioningRef.current = false;
         });
       },
     }),

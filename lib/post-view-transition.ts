@@ -1,4 +1,5 @@
 export interface PostViewTransitionNames {
+  header: string;
   title: string;
   tag: string;
   publishedAt: string;
@@ -9,6 +10,7 @@ export function getPostViewTransitionNames(slug: string): PostViewTransitionName
   const key = slug.trim().toLowerCase();
 
   return {
+    header: `post-${key}-header`,
     title: `post-${key}-title`,
     tag: `post-${key}-tag`,
     publishedAt: `post-${key}-published-at`,

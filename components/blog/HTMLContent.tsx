@@ -118,6 +118,16 @@ export default function HTMLContent({ content }: HTMLContentProps) {
       if (!/\bdata-lightbox-index\s*=/.test(nextTag)) {
         nextTag = nextTag.replace('<img', `<img data-lightbox-index="${imageIndex}"`);
       }
+      // Quill output rarely includes dimensions — give the browser an aspect-ratio
+      // hint so it can reserve space before the image loads (prevents CLS).
+      // Combined with the `max-width: 100%; height: auto` wrapper styles, the
+      // rendered size remains responsive to the real aspect ratio once loaded.
+      const hasWidthAttr = /\bwidth\s*=/.test(nextTag);
+      const hasHeightAttr = /\bheight\s*=/.test(nextTag);
+      const hasInlineWidth = /\bstyle\s*=\s*["'][^"']*\bwidth\s*:/i.test(nextTag);
+      if (!hasWidthAttr && !hasHeightAttr && !hasInlineWidth) {
+        nextTag = nextTag.replace('<img', '<img width="1600" height="900"');
+      }
 
       return nextTag;
     });
@@ -297,7 +307,8 @@ export default function HTMLContent({ content }: HTMLContentProps) {
             },
           },
           '& img': {
-            maxWidth: '100%', 
+            maxWidth: '100%',
+            height: 'auto',
             borderRadius: 0,
             my: 10,
             boxShadow: `0 20px 40px ${alpha('#000000', 0.15)}`,
@@ -384,9 +395,10 @@ export default function HTMLContent({ content }: HTMLContentProps) {
             counterIncrement: 'line',
             content: 'counter(line)',
             display: 'inline-block',
-            width: '2.5rem',
+            width: '3rem',
             textAlign: 'right',
-            mr: '1rem',
+            paddingRight: '0.9rem',
+            marginRight: '1rem',
             color: 'rgba(255,255,255,0.25)',
             fontSize: '0.75rem',
             userSelect: 'none',

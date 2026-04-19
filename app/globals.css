@@ -163,21 +163,42 @@ body {
 }
 
 /* View Transitions */
-::view-transition-group(.post-header-shared) {
-  animation-duration: 420ms;
+::view-transition-group(.post-title-shared) {
+  animation-duration: 360ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-image-pair(.post-title-shared) {
+  animation-name: post-title-blur;
+  animation-duration: 360ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes post-title-blur {
+  30% {
+    filter: blur(2px);
+  }
 }
 
 ::view-transition-old(.post-body-exit) {
   animation:
-    140ms ease-out both fade-out,
-    180ms ease-out both slide-down;
+    180ms ease-in both fade-out,
+    220ms ease-in both slide-down;
 }
 
 ::view-transition-new(.post-body-enter) {
   animation:
-    240ms ease-out 120ms both fade-in,
-    320ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both slide-up;
+    260ms ease-out 140ms both fade-in,
+    340ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both slide-up;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
 }
 
 @keyframes fade-in {

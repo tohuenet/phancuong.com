@@ -46,6 +46,7 @@ export default function ScrollToTop() {
           }}
         >
           <IconButton
+            aria-label="Cuộn lên đầu trang"
             onClick={scrollToTop}
             sx={{
               padding: '12px',

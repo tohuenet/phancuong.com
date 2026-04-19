@@ -197,13 +197,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
     }
   };
 
-  // Mask email for privacy
-  const maskEmail = (email: string) => {
-    if (isAdmin || session?.user?.email === email) return email;
-    const [name, domain] = email.split('@');
-    if (name.length <= 2) return `${name}***@${domain}`;
-    return `${name.substring(0, 2)}***${name.substring(name.length - 1)}@${domain}`;
-  };
+
 
   // Helper to render a comment item
   const renderComment = (comment: any, isReply: boolean = false) => {
@@ -357,11 +351,6 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                   )}
                   {contentBody}
                 </Typography>
-                {(isAdmin || isOwner) && (
-                  <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'text.secondary', opacity: 0.6, fontSize: '0.7rem' }}>
-                    {maskEmail(comment.authorEmail)}
-                  </Typography>
-                )}
               </>
             )}
 
@@ -393,14 +382,14 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
             </Collapse>
 
             {isAdmin && <Collapse in={expandedAdminId === comment.id}>
-              <Box sx={{ mt: 1.5, p: 2, borderRadius: '8px', bgcolor: alpha(theme.palette.primary.main, 0.03), border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}`, fontSize: '0.75rem' }}>
-                <Stack spacing={1}>
-                  <Typography variant="caption"><strong>Email:</strong> {comment.authorEmail}</Typography>
-                  <Typography variant="caption"><strong>IP:</strong> {comment.ip}</Typography>
+              <Box sx={{ mt: 1.5, p: 2, borderRadius: '8px', bgcolor: alpha(theme.palette.primary.main, 0.03), border: `1px dashed ${alpha(theme.palette.primary.main, 0.2)}` }}>
+                <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem' }}><strong>Email:</strong> {comment.authorEmail}</Typography>
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem' }}><strong>IP:</strong> {comment.ip}</Typography>
                   {isEdited && (
-                    <Box sx={{ pl: 1, borderLeft: `1px solid ${alpha(theme.palette.divider, 0.2)}` }}>
-                      <Typography variant="caption" sx={{ display: 'block' }}><strong>Gốc:</strong> {comment.originalContent}</Typography>
-                    </Box>
+                    <Typography variant="caption" sx={{ fontSize: '0.7rem', color: 'primary.main' }}>
+                      <strong>Nội dung gốc:</strong> {comment.originalContent}
+                    </Typography>
                   )}
                 </Stack>
               </Box>

@@ -31,7 +31,7 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
       <Box component="header" sx={{ mb: 5 }}>
-        <ViewTransition name={transitionNames.title} share="post-header-shared">
+        <ViewTransition name={transitionNames.title} share="post-title-shared">
           <Typography
             variant="h4"
             className="title-text"
@@ -52,8 +52,7 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
         </ViewTransition>
 
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-          <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none' }}>
-            <ViewTransition name={transitionNames.tag} share="post-header-shared">
+            <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none' }}>
               <Typography
                 variant="caption"
                 sx={{
@@ -70,27 +69,22 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
               >
                 #{primaryTag.name}
               </Typography>
-            </ViewTransition>
-          </Link>
+            </Link>
 
-          <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
+            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
 
-          <ViewTransition name={transitionNames.publishedAt} share="post-header-shared">
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
               {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: vi })}
             </Typography>
-          </ViewTransition>
 
-          <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
+            <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3 }} />
 
-          <ViewTransition name={transitionNames.readingTime} share="post-header-shared">
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
-              <AccessTimeIcon sx={{ fontSize: '0.8rem', opacity: 0.7 }} />
-              <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                {post.readingTime}
-              </Typography>
-            </Stack>
-          </ViewTransition>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'text.secondary' }}>
+            <AccessTimeIcon sx={{ fontSize: '0.8rem', opacity: 0.7 }} />
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+              {post.readingTime}
+            </Typography>
+          </Stack>
         </Stack>
       </Box>
     </motion.div>

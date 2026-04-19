@@ -22,8 +22,6 @@ import type { Metadata } from 'next';
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export const metadata: Metadata = {
@@ -36,13 +34,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Technical Blog & Portfolio',
     description: 'Practical software engineering guides and technical insights.',
-    url: 'https://phancuong.com',
+    url: '/',
     siteName: 'phancuong.com',
     locale: 'vi_VN',
     type: 'website',
-  },
-  alternates: {
-    canonical: '/',
   },
 };
 

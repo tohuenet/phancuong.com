@@ -16,12 +16,14 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ViewTransition } from 'react';
 import { format } from 'date-fns';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { motion } from 'framer-motion';
 import { tokens } from '@/lib/theme-tokens';
+import { getPostViewTransitionNames } from '@/lib/post-view-transition';
 
 interface PostCardProps {
   post: {
@@ -42,6 +44,8 @@ interface PostCardProps {
 export default function PostCard({ post, featured, isAdmin, onDelete }: PostCardProps) {
   const theme = useTheme();
   const router = useRouter();
+  const transitionNames = getPostViewTransitionNames(post.slug);
+  const primaryTag = post.tags[0];
 
   return (
     <motion.div
@@ -49,15 +53,18 @@ export default function PostCard({ post, featured, isAdmin, onDelete }: PostCard
       transition={{ duration: 0.4, ease: tokens.curves.standard }}
       style={{ height: '100%', position: 'relative' }}
     >
-      <Card 
+      <Card
         className="glass"
-        sx={{ 
-          height: '100%', 
-          display: 'flex', 
+        sx={{
+          height: '100%',
+          display: 'flex',
           flexDirection: { xs: 'column', md: featured ? 'row' : 'column' },
           overflow: 'hidden',
           bgcolor: 'transparent',
           position: 'relative',
+          // Override the global `.glass` radius (28px / xl) with a tighter,
+          // more angular corner to match the grid-card aesthetic.
+          borderRadius: `${tokens.radius.md}px`,
           '&:hover': {
             borderColor: 'primary.main',
             '& .card-image': { transform: 'scale(1.05)' },
@@ -176,15 +183,15 @@ export default function PostCard({ post, featured, isAdmin, onDelete }: PostCard
           }}>
             <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
               {post.tags.slice(0, 2).map((tag) => (
-                <Typography 
-                  key={tag.slug} 
-                  variant="caption" 
+                <Typography
+                  key={tag.slug}
+                  variant="caption"
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
                     router.push(`/blog?tag=${tag.slug}`);
                   }}
-                  sx={{ 
+                  sx={{
                     color: 'primary.main',
                     fontWeight: 800,
                     textTransform: 'uppercase',
@@ -201,33 +208,35 @@ export default function PostCard({ post, featured, isAdmin, onDelete }: PostCard
                 </Typography>
               ))}
             </Stack>
-            
-            <Typography 
-              variant={featured ? "h3" : "h5"} 
-              component="h2" 
-              sx={{ 
-                fontWeight: 950,
-                lineHeight: 1.1, 
-                mb: 2,
-                color: 'text.primary',
-                letterSpacing: '-0.03em',
-                display: '-webkit-box', 
-                WebkitLineClamp: 2, 
-                WebkitBoxOrient: 'vertical', 
-                overflow: 'hidden',
-              }}
-            >
-              {post.title}
-            </Typography>
-            
-            <Typography 
-              variant="body1" 
-              color="text.secondary" 
-              sx={{ 
-                mb: 4, 
-                display: '-webkit-box', 
-                WebkitLineClamp: featured ? 3 : 2, 
-                WebkitBoxOrient: 'vertical', 
+
+            <ViewTransition name={transitionNames.title} share="post-title-shared">
+              <Typography
+                variant={featured ? "h3" : "h5"}
+                component="h2"
+                sx={{
+                  fontWeight: 950,
+                  lineHeight: 1.1,
+                  mb: 2,
+                  color: 'text.primary',
+                  letterSpacing: '-0.03em',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {post.title}
+              </Typography>
+            </ViewTransition>
+
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                mb: 4,
+                display: '-webkit-box',
+                WebkitLineClamp: featured ? 3 : 2,
+                WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
                 lineHeight: 1.6,
                 fontSize: '1rem',
@@ -236,11 +245,11 @@ export default function PostCard({ post, featured, isAdmin, onDelete }: PostCard
             >
               {post.excerpt}
             </Typography>
-            
-            <Box sx={{ 
-              mt: 'auto', 
-              display: 'flex', 
-              alignItems: 'center', 
+
+            <Box sx={{
+              mt: 'auto',
+              display: 'flex',
+              alignItems: 'center',
               gap: 2,
               opacity: 0.6,
             }}>
