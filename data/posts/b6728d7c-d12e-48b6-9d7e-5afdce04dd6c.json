@@ -1,0 +1,19 @@
+{
+  "title": "Grafana LGTM & Alloy (1)",
+  "slug": "trien-khai-obsservability-grafana-lgtm-alloy-s2qv0",
+  "content": "<p>test</p>",
+  "excerpt": "",
+  "thumbnailUrl": "",
+  "published": true,
+  "order": 0,
+  "id": "b6728d7c-d12e-48b6-9d7e-5afdce04dd6c",
+  "createdAt": "2026-04-20T08:08:57.753Z",
+  "updatedAt": "2026-04-20T08:10:55.967Z",
+  "tags": [
+    {
+      "id": "4568f808-abd4-4a0d-b724-e4c761dea18c",
+      "name": "observability",
+      "slug": "observability"
+    }
+  ]
+}
