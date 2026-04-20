@@ -1,4 +1,5 @@
 import { getPublishedPosts, getAllTags } from '@/lib/blog';
+import { auth } from '@/auth';
 import { Metadata } from 'next';
 import BlogListClient from '@/components/blog/BlogListClient';
 
@@ -16,14 +17,18 @@ interface BlogPageProps {
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
+  const session = await auth();
+  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
+  
   const { tag, q, page: pageStr } = await searchParams;
-  const page = Number.parseInt(pageStr || '1', 10);
+  const page = pageStr ? parseInt(pageStr, 10) : 1;
 
   const { posts, pages } = await getPublishedPosts({
     tag,
     search: q,
     page,
     limit: 10,
+    isAdmin,
   });
 
   const tags = await getAllTags();

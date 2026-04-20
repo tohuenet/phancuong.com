@@ -2,9 +2,27 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { CommentsDB } from '@/lib/storage';
 
-// Helper to strip HTML tags
-function stripHtml(html: string) {
-  return html.replace(/<[^>]*>?/gm, '');
+import { sanitizeHtml, cleanupImages, diffRemovedImages } from '@/lib/html';
+
+function collectDescendants(rootId: string, all: any[]): any[] {
+  const byParent = new Map<string, any[]>();
+  for (const c of all) {
+    const p = c.parentId ?? null;
+    if (!p) continue;
+    if (!byParent.has(p)) byParent.set(p, []);
+    byParent.get(p)!.push(c);
+  }
+  const out: any[] = [];
+  const stack = [rootId];
+  while (stack.length) {
+    const next = stack.pop()!;
+    const children = byParent.get(next) || [];
+    for (const c of children) {
+      out.push(c);
+      stack.push(c.id);
+    }
+  }
+  return out;
 }
 
 export async function PATCH(
@@ -33,9 +51,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Sanitize new content
-    const cleanContent = stripHtml(content).trim();
-    if (!cleanContent) {
+    // Sanitize HTML instead of stripping it all
+    const cleanContent = sanitizeHtml(content).trim();
+    if (!cleanContent || cleanContent === '<p></p>') {
       return NextResponse.json({ error: 'Content cannot be empty' }, { status: 400 });
     }
 
@@ -54,6 +72,10 @@ export async function PATCH(
     };
 
     await CommentsDB.save(updatedComment);
+
+    // Release images that were removed during the edit
+    await diffRemovedImages(comment.content || '', cleanContent);
+
     return NextResponse.json(updatedComment);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
@@ -84,8 +106,23 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await CommentsDB.delete(id);
-    return NextResponse.json({ message: 'Comment deleted' });
+    // Cascade: when a root comment is deleted, every reply (and their images)
+    // must go with it. Replies are only one level deep in this system, but we
+    // walk the tree defensively in case that ever changes.
+    const allComments = await CommentsDB.getAll();
+    const toDelete = collectDescendants(id, allComments);
+    toDelete.push(comment);
+
+    for (const c of toDelete) {
+      if (c.content) await cleanupImages(c.content);
+      await CommentsDB.delete(c.id);
+    }
+
+    return NextResponse.json({
+      message: 'Comment deleted',
+      deletedIds: toDelete.map(c => c.id),
+    });
+
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
   }

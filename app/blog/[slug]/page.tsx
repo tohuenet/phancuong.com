@@ -15,8 +15,6 @@ import CommentSection from '@/components/blog/CommentSection';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
 import PostHeader from '@/components/blog/PostHeader';
 import ReadingProgressBar from '@/components/common/ReadingProgressBar';
-import ScrollToTop from '@/components/common/ScrollToTop';
-import PremiumScrollUp from '@/components/common/PremiumScrollUp';
 
 interface PostDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -67,7 +65,6 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           <ArticleSchema slug={slug} />
         </Suspense>
         <ReadingProgressBar />
-        <ScrollToTop />
         <Box sx={{ mb: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/" transitionTypes={['nav-back']} style={{ textDecoration: 'none' }}>
             <Button
@@ -159,11 +156,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
             </Button>
           </Link>
 
-          <Box sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-            <PremiumScrollUp />
-          </Box>
-
-          <Box sx={{ width: 100, display: { xs: 'none', sm: 'block' } }} />
+          <Box sx={{ flex: 1 }} />
         </Box>
     </PostDetailShell>
   );
@@ -210,7 +203,10 @@ async function ArticleSchema({ slug }: { slug: string }) {
 
 // Independent Metadata/Header Loader
 async function HeaderLoader({ slug }: { slug: string }) {
-  const postMeta = await getPostMetaBySlug(slug);
+  const session = await auth();
+  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
+  
+  const postMeta = await getPostMetaBySlug(slug, isAdmin);
   if (!postMeta) notFound();
 
   const transitionNames = getPostViewTransitionNames(postMeta.slug);
@@ -219,7 +215,10 @@ async function HeaderLoader({ slug }: { slug: string }) {
 
 // Independent Article Content Loader
 async function ArticleBodyLoader({ slug }: { slug: string }) {
-  const post = await getPostBySlug(slug);
+  const session = await auth();
+  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
+
+  const post = await getPostBySlug(slug, isAdmin);
   if (!post) return null;
 
   return (

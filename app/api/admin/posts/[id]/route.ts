@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { PostsDB } from '@/lib/storage';
+import { PostsDB, CommentsDB } from '@/lib/storage';
 import { revalidateTag } from 'next/cache';
 import { BLOG_CACHE_TAGS } from '@/lib/blog';
+import { cleanupImages, diffRemovedImages } from '@/lib/html';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs/promises';
+import path from 'path';
 
 export async function PATCH(
   request: Request,
@@ -49,9 +52,25 @@ export async function PATCH(
       tags
     });
 
+    // Release images that were removed from the body during the edit
+    if (typeof postData.content === 'string' && postData.content !== existingPost.content) {
+      await diffRemovedImages(existingPost.content || '', postData.content);
+    }
+
+    // If thumbnail was replaced with a different local upload, free the old one
+    if (
+      typeof postData.thumbnailUrl !== 'undefined' &&
+      postData.thumbnailUrl !== existingPost.thumbnailUrl &&
+      existingPost.thumbnailUrl?.startsWith('/uploads/')
+    ) {
+      const oldName = existingPost.thumbnailUrl.replace('/uploads/', '');
+      const oldPath = path.join(process.cwd(), 'public', 'uploads', oldName);
+      try { await fs.unlink(oldPath); } catch { /* ignore */ }
+    }
+
     revalidateTag(BLOG_CACHE_TAGS.posts, 'max');
     revalidateTag(BLOG_CACHE_TAGS.tags, 'max');
-    
+
     return NextResponse.json(updatedPost);
   } catch (error) {
     console.error('Post Update Error:', error);
@@ -75,6 +94,38 @@ export async function DELETE(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
+    // 1. Cleanup images associated with this post body
+    if (existingPost.content) {
+      await cleanupImages(existingPost.content);
+    }
+
+    // 2. Cleanup post thumbnail if it is a local upload
+    if (existingPost.thumbnailUrl && existingPost.thumbnailUrl.startsWith('/uploads/')) {
+      const fileName = existingPost.thumbnailUrl.replace('/uploads/', '');
+      const filePath = path.join(process.cwd(), 'public', 'uploads', fileName);
+      try {
+        await fs.unlink(filePath);
+        console.log(`Thumbnail released: ${fileName}`);
+      } catch (err) {
+        // Ignore
+      }
+    }
+
+    // 3. Cleanup associated comments and their images
+    const allComments = await CommentsDB.getAll();
+    const postComments = allComments.filter(c => c.postSlug === existingPost.slug);
+    
+    for (const comment of postComments) {
+      // Cleanup images in comment
+      if (comment.content) {
+        await cleanupImages(comment.content);
+      }
+      // Delete comment record
+      await CommentsDB.delete(comment.id);
+      console.log(`Comment deleted: ${comment.id}`);
+    }
+
+    // Soft-delete the post record (keeping the record for audit, but resources are released)
     await PostsDB.save({
       ...existingPost,
       deletedAt: new Date()
@@ -84,6 +135,7 @@ export async function DELETE(
     revalidateTag(BLOG_CACHE_TAGS.tags, 'max');
     
     return NextResponse.json({ success: true });
+
   } catch (error) {
     console.error('Post Delete Error:', error);
     return NextResponse.json({ error: 'Failed to soft-delete post' }, { status: 500 });

@@ -13,10 +13,14 @@ import {
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import QuillEditor from './QuillEditor';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+const TiptapEditor = dynamic(() => import('./TiptapEditor'), { ssr: false });
 import { useSession } from 'next-auth/react';
 import { slugify } from '@/lib/slug';
+import { LayoutModeContext } from '../ThemeRegistry/ThemeContextProvider';
+import { useContext } from 'react';
+import { useFeedback } from '@/components/Providers/FeedbackProvider';
 
 interface PostData {
   id?: string;
@@ -49,8 +53,10 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
   const router = useRouter();
   const theme = useTheme();
   const { data: session } = useSession();
+  const { isWide } = useContext(LayoutModeContext);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { notify } = useFeedback();
 
   // Pre-process initial tags for the form
   const defaultValues = initialData ? {
@@ -67,15 +73,37 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
     tagsString: '',
   };
 
-  const { register, handleSubmit, control } = useForm<PostData>({
+  const { register, handleSubmit, control, setValue, getValues, watch } = useForm<PostData>({
     defaultValues
   });
 
-  const onSubmit = async (data: PostData) => {
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false);
+  const [localDraft, setLocalDraft] = useState<string | null>(null);
+
+  // Check for autosave on mount
+  useEffect(() => {
+    const draft = localStorage.getItem(`tiptap_autosave_${isEditing ? initialData?.id : 'new-post'}`);
+    if (draft && draft !== initialData?.content) {
+      setLocalDraft(draft);
+      setShowRestorePrompt(true);
+    }
+  }, [isEditing, initialData]);
+
+  const handleRestore = () => {
+    if (localDraft) {
+      setValue('content', localDraft);
+      setShowRestorePrompt(false);
+    }
+  };
+
+  const onSubmit = async (data: PostData, isPublishing = true) => {
     setSaving(true);
     setError(null);
 
-    const submissionData = { ...data };
+    const submissionData = { 
+      ...data, 
+      published: isPublishing 
+    };
 
     // Auto-generate slug if not present
     if (!submissionData.slug) {
@@ -101,9 +129,15 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
 
       if (res.ok) {
         const saved = await res.json();
-        localStorage.removeItem(`quill_autosave_${isEditing ? initialData?.id : 'new-post'}`);
-        const target = saved?.slug ? `/blog/${saved.slug}` : '/';
-        router.push(target);
+        localStorage.removeItem(`tiptap_autosave_${isEditing ? initialData?.id : 'new-post'}`);
+        
+        notify(isPublishing ? 'Đã lưu và công khai bài viết.' : 'Đã lưu bản nháp.', 'success');
+        
+        if (!isEditing && saved?.id) {
+          // If it was a new post, redirect to the edit page so they can keep working
+          router.push(`/admin/posts/edit/${saved.id}`);
+        }
+        
         router.refresh();
       } else {
         const result = await res.json();
@@ -116,8 +150,17 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
     }
   };
 
+  const isPublished = watch('published');
+
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ maxWidth: '800px', mx: 'auto', pt: 4, pb: 10 }}>
+    <Box component="form" sx={{ 
+      maxWidth: isWide ? '100%' : '800px', 
+      mx: 'auto', 
+      pt: 4, 
+      pb: 10,
+      transition: 'max-width 0.5s cubic-bezier(0.2, 0, 0, 1)',
+      px: isWide ? { xs: 2, md: 8 } : 0
+    }}>
       {/* Telegraph Header */}
       <Box sx={{ 
         position: 'fixed', 
@@ -137,33 +180,65 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
           onClick={() => router.back()}
           sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '0.8rem' }}
         >
-          {isEditing ? 'Cancel' : 'Home'}
+          {isEditing ? 'HỦY' : 'TRANG CHỦ'}
         </Button>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           {saving && <CircularProgress size={16} />}
+          
           <Button 
-            type="submit" 
             disabled={saving}
+            onClick={handleSubmit((data) => onSubmit(data, false))}
             sx={{ 
-              color: 'primary.main', 
-              fontWeight: 800, 
-              fontSize: '1rem',
-              letterSpacing: '0.05em',
+              color: 'text.secondary', 
+              fontWeight: 700, 
+              fontSize: '0.9rem',
               '&:hover': { bgcolor: 'transparent', opacity: 0.7 }
             }}
           >
-            {isEditing ? 'SAVE' : 'PUBLISH'}
+            LƯU NHÁP
+          </Button>
+
+          <Button 
+            variant="contained"
+            disabled={saving}
+            onClick={handleSubmit((data) => onSubmit(data, true))}
+            sx={{ 
+              bgcolor: 'primary.main', 
+              color: 'white',
+              fontWeight: 800, 
+              fontSize: '0.9rem',
+              px: 3,
+              borderRadius: 2,
+              boxShadow: 'none',
+              '&:hover': { bgcolor: 'primary.dark', boxShadow: 'none' }
+            }}
+          >
+            {isPublished ? 'CẬP NHẬT' : 'CÔNG KHAI'}
           </Button>
         </Stack>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 4, mt: 8 }}>{error}</Alert>}
 
-      <Stack spacing={1} sx={{ mt: 8 }}>
+      {showRestorePrompt && (
+        <Alert 
+          severity="info" 
+          sx={{ mb: 4, mt: 8 }}
+          action={
+            <Button color="inherit" size="small" onClick={handleRestore}>
+              KHÔI PHỤC
+            </Button>
+          }
+        >
+          Phát hiện bản nháp chưa lưu từ trước. Bạn có muốn khôi phục không?
+        </Alert>
+      )}
+
+      <Stack spacing={1} sx={{ mt: showRestorePrompt ? 2 : 8 }}>
         <TextField 
           fullWidth 
           variant="standard"
-          placeholder="Title"
+          placeholder="Tiêu đề bài viết..."
           {...register('title', { required: 'Title is required' })} 
           slotProps={{
             input: {
@@ -203,10 +278,10 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
             control={control}
             rules={{ required: 'Story is required' }}
             render={({ field }) => (
-              <QuillEditor 
+              <TiptapEditor 
                 value={field.value} 
                 onChange={field.onChange} 
-                placeholder="Your story..."
+                placeholder="Câu chuyện của bạn..."
                 id={isEditing ? initialData?.id : 'new-post'}
               />
             )}
@@ -214,5 +289,6 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
         </Box>
       </Stack>
     </Box>
+
   );
 }

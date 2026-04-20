@@ -52,14 +52,16 @@ export async function getPublishedPosts(params: {
   search?: string;
   page?: number;
   limit?: number;
+  isAdmin?: boolean;
 }): Promise<{ posts: PostWithReadingTime[]; total: number; pages: number }> {
-  const { tag, search, page = 1, limit = 10 } = params;
+  const { tag, search, page = 1, limit = 10, isAdmin = false } = params;
   const skip = (page - 1) * limit;
 
   let allPosts = await PostsDB.getAll();
   
   // Filter published and non-deleted
-  allPosts = allPosts.filter(p => p.published && !p.deletedAt);
+  // If admin, show all (except soft-deleted). If not, show only published.
+  allPosts = allPosts.filter(p => (isAdmin || p.published) && !p.deletedAt);
 
   // Tag filter
   if (tag) {
@@ -82,8 +84,14 @@ export async function getPublishedPosts(params: {
 
   // Sort
   allPosts.sort((a, b) => {
+    // 1. Pinned posts stay on top
     if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
     if (a.isPinned && a.pinnedOrder !== b.pinnedOrder) return a.pinnedOrder - b.pinnedOrder;
+    
+    // 2. Drafts (non-published) come after pinned but before regular published
+    if (a.published !== b.published) return a.published ? 1 : -1;
+
+    // 3. Chronological for the rest
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
@@ -100,9 +108,9 @@ export async function getPublishedPosts(params: {
   };
 }
 
-export const getPostBySlug = cache(async (slug: string): Promise<PostWithReadingTime | null> => {
+export const getPostBySlug = cache(async (slug: string, isAdmin = false): Promise<PostWithReadingTime | null> => {
   const post = await PostsDB.getBySlug(slug);
-  if (!post || !post.published || post.deletedAt) return null;
+  if (!post || (!isAdmin && !post.published) || post.deletedAt) return null;
 
   // Hydrate series if needed
   let series = null;
@@ -127,9 +135,9 @@ export const getPostBySlug = cache(async (slug: string): Promise<PostWithReading
   };
 });
 
-export const getPostMetaBySlug = cache(async (slug: string): Promise<Omit<PostWithReadingTime, 'content'> | null> => {
+export const getPostMetaBySlug = cache(async (slug: string, isAdmin = false): Promise<Omit<PostWithReadingTime, 'content'> | null> => {
   const post = await PostsDB.getBySlug(slug);
-  if (!post || !post.published || post.deletedAt) return null;
+  if (!post || (!isAdmin && !post.published) || post.deletedAt) return null;
 
   const { content, ...meta } = post;
   return {

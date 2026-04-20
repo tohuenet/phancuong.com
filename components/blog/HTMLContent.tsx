@@ -118,7 +118,7 @@ export default function HTMLContent({ content }: HTMLContentProps) {
       if (!/\bdata-lightbox-index\s*=/.test(nextTag)) {
         nextTag = nextTag.replace('<img', `<img data-lightbox-index="${imageIndex}"`);
       }
-      // Quill output rarely includes dimensions — give the browser an aspect-ratio
+      // Tiptap/Quill output rarely includes dimensions — give the browser an aspect-ratio
       // hint so it can reserve space before the image loads (prevents CLS).
       // Combined with the `max-width: 100%; height: auto` wrapper styles, the
       // rendered size remains responsive to the real aspect ratio once loaded.
@@ -140,7 +140,7 @@ export default function HTMLContent({ content }: HTMLContentProps) {
       }
     );
 
-    // Transform Quill code blocks to macOS Terminal Code Blocks dynamically.
+    // Transform editor code blocks to macOS Terminal Code Blocks dynamically.
     // The content is left as plain text inside <code data-highlight> and will be
     // syntax-highlighted (with auto language detection) on the client in a useEffect.
     const transformed = withNormalizedLinks.replace(
@@ -150,7 +150,7 @@ export default function HTMLContent({ content }: HTMLContentProps) {
         // protect PHP/HTML processing-instruction-looking tokens during rendering.
         const rawEscaped = String(content).replace(/\u200B/g, '');
 
-        // Trim a single leading/trailing newline (Quill often adds them)
+        // Trim a single leading/trailing newline (editors often add them)
         const trimmed = rawEscaped.replace(/^\n/, '').replace(/\n$/, '');
 
         return `
@@ -164,8 +164,15 @@ export default function HTMLContent({ content }: HTMLContentProps) {
               <div class="terminal-meta">
                 <span data-lang-label class="terminal-lang"></span>
                 <button
+                  class="terminal-wrap-toggle"
+                  data-state="off"
+                  onclick="const wrapper = this.closest('.terminal-wrapper'); const isWrapped = wrapper.classList.toggle('is-wrapped'); this.innerText = isWrapped ? 'Wrap: On' : 'Wrap: Off'; this.setAttribute('data-state', isWrapped ? 'on' : 'off');"
+                >
+                  Wrap: Off
+                </button>
+                <button
                   class="terminal-copy"
-                  onclick="navigator.clipboard.writeText(this.closest('.terminal-wrapper').querySelector('code').innerText); this.innerText='Copied!'; setTimeout(() => { this.innerText='Copy'; }, 2000)"
+                  onclick="navigator.clipboard.writeText(this.closest('.terminal-wrapper').querySelector('code').innerText); const originalText = this.innerText; this.innerText='Copied!'; setTimeout(() => { this.innerText=originalText; }, 2000)"
                 >
                   Copy
                 </button>
@@ -207,7 +214,7 @@ export default function HTMLContent({ content }: HTMLContentProps) {
 
   // Syntax highlight every code block inside the article after render.
   // We use highlight.js's auto language detection so the author doesn't have to
-  // annotate code blocks (Quill's editor doesn't expose a language field).
+  // annotate code blocks (older editor outputs may not have a language field).
   React.useEffect(() => {
     const root = contentRef.current;
     if (!root) return;
@@ -245,6 +252,20 @@ export default function HTMLContent({ content }: HTMLContentProps) {
         const label = wrapper?.querySelector<HTMLElement>('[data-lang-label]');
         if (label) label.textContent = language;
       }
+
+      // Auto-wrap on mobile by default
+      const isMobile = window.matchMedia('(max-width: 600px)').matches;
+      if (isMobile) {
+        const wrapper = block.closest('.terminal-wrapper');
+        if (wrapper && !wrapper.classList.contains('is-wrapped')) {
+          wrapper.classList.add('is-wrapped');
+          const toggle = wrapper.querySelector('.terminal-wrap-toggle');
+          if (toggle) {
+            (toggle as HTMLElement).innerText = 'Wrap: On';
+            toggle.setAttribute('data-state', 'on');
+          }
+        }
+      }
     });
   }, [content]);
 
@@ -258,9 +279,9 @@ export default function HTMLContent({ content }: HTMLContentProps) {
           overflowWrap: 'break-word',
           hyphens: 'auto',
           '& p': {
-            mb: 4, 
-            lineHeight: 1.9, 
-            fontSize: '1.3rem',
+            mb: 3, 
+            lineHeight: 1.75, 
+            fontSize: '1.125rem',
             fontFamily: tokens.typography.fontFamily.serif,
             color: 'text.secondary',
             fontWeight: 400
@@ -269,13 +290,13 @@ export default function HTMLContent({ content }: HTMLContentProps) {
             color: 'text.primary',
             fontFamily: tokens.typography.fontFamily.serif,
             letterSpacing: '-0.01em',
-            mb: 4,
-            mt: 8,
-            fontWeight: 600
+            mb: 2,
+            mt: 6,
+            fontWeight: 700
           },
-          '& h1': { fontSize: '2.5rem' },
-          '& h2': { fontSize: '2.25rem' },
-          '& h3': { fontSize: '1.75rem' },
+          '& h1': { fontSize: '2.25rem' },
+          '& h2': { fontSize: '1.85rem' },
+          '& h3': { fontSize: '1.5rem' },
           '& a': {
             color: 'primary.main', 
             fontWeight: 700,
@@ -292,12 +313,12 @@ export default function HTMLContent({ content }: HTMLContentProps) {
             borderLeft: '4px solid',
             borderColor: 'primary.main',
             pl: 5,
-            py: 1.5,
-            my: 10,
+            py: 1,
+            my: 6,
             '& p': { 
               mb: 0, 
               fontStyle: 'italic', 
-              fontSize: '1.5rem', 
+              fontSize: '1.25rem', 
               fontFamily: tokens.typography.fontFamily.serif,
               color: 'text.primary', 
               opacity: 0.8,
@@ -310,8 +331,8 @@ export default function HTMLContent({ content }: HTMLContentProps) {
             maxWidth: '100%',
             height: 'auto',
             borderRadius: 0,
-            my: 10,
-            boxShadow: `0 20px 40px ${alpha('#000000', 0.15)}`,
+            my: 6,
+            boxShadow: `0 15px 35px ${alpha('#000000', 0.1)}`,
             cursor: 'zoom-in',
             transition: 'transform 0.3s ease',
             '&:hover': {
@@ -320,11 +341,11 @@ export default function HTMLContent({ content }: HTMLContentProps) {
           },
           '& ul, & ol': {
             pl: 5,
-            mb: 4,
+            mb: 3,
             '& li': {
-              mb: 2,
-              lineHeight: 1.8,
-              fontSize: '1.3rem',
+              mb: 1.5,
+              lineHeight: 1.7,
+              fontSize: '1.125rem',
               fontFamily: tokens.typography.fontFamily.serif,
               color: 'text.secondary'
             }
@@ -360,6 +381,28 @@ export default function HTMLContent({ content }: HTMLContentProps) {
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
           },
+          '& .terminal-wrap-toggle': {
+            background: 'transparent',
+            border: '1px solid transparent',
+            color: 'rgba(255,255,255,0.5)',
+            fontFamily: 'sans-serif',
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            p: '2px 8px',
+            borderRadius: '4px',
+            '&[data-state="on"]': {
+              color: 'primary.light',
+              bgcolor: alpha('#fff', 0.05),
+              borderColor: alpha(tokens.color.primary, 0.3),
+            },
+            '&:hover': { 
+              color: '#fff',
+              bgcolor: alpha('#fff', 0.1),
+              borderColor: alpha('#fff', 0.2)
+            },
+          },
           '& .terminal-copy': {
             background: 'transparent',
             border: 'none',
@@ -390,15 +433,31 @@ export default function HTMLContent({ content }: HTMLContentProps) {
             fontFamily: tokens.typography.fontFamily.mono,
             fontSize: '0.85rem',
             color: '#e6edf3',
+            whiteSpace: 'pre',
+            wordBreak: 'normal',
+          },
+          '& .is-wrapped .terminal-body code': {
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          },
+          '& .is-wrapped .terminal-body pre': {
+            overflowX: 'hidden',
+          },
+          '& .terminal-body [data-line]': {
+            display: 'block',
+            position: 'relative',
+            paddingLeft: '4.5rem',
+            minHeight: '1.25rem',
           },
           '& .terminal-body [data-line]::before': {
             counterIncrement: 'line',
             content: 'counter(line)',
-            display: 'inline-block',
-            width: '3rem',
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '3.5rem',
             textAlign: 'right',
-            paddingRight: '0.9rem',
-            marginRight: '1rem',
+            paddingRight: '1rem',
             color: 'rgba(255,255,255,0.25)',
             fontSize: '0.75rem',
             userSelect: 'none',

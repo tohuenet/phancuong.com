@@ -4,10 +4,7 @@ import { CommentsDB, PostsDB } from '@/lib/storage';
 import { sendCommentNotification } from '@/lib/mail';
 import { v4 as uuidv4 } from 'uuid';
 
-// Helper to strip HTML tags for "no media/text only" requirement
-function stripHtml(html: string) {
-  return html.replace(/<[^>]*>?/gm, '');
-}
+import { sanitizeHtml } from '@/lib/html';
 
 export async function GET(
   request: Request,
@@ -20,8 +17,13 @@ export async function GET(
     const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
 
     const allComments = await CommentsDB.getAll();
-    const postComments = allComments
-      .filter(c => c.postSlug === slug)
+    const rawPostComments = allComments.filter(c => c.postSlug === slug);
+
+    // Drop replies whose parent no longer exists. These are artifacts of older
+    // deletes that didn't cascade; they inflate counts and never render.
+    const ids = new Set(rawPostComments.map(c => c.id));
+    const postComments = rawPostComments
+      .filter(c => !c.parentId || ids.has(c.parentId))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Mask emails and hide IP for non-admins for privacy
@@ -69,10 +71,10 @@ export async function POST(
       return NextResponse.json({ error: 'Comment content cannot be empty' }, { status: 400 });
     }
 
-    // Strict safety check: Strip all HTML tags
-    const cleanContent = stripHtml(content).trim();
+    // Sanitize HTML instead of stripping it all
+    const cleanContent = sanitizeHtml(content).trim();
     
-    if (cleanContent.length === 0) {
+    if (cleanContent.length === 0 || cleanContent === '<p></p>') {
       return NextResponse.json({ error: 'Invalid comment content' }, { status: 400 });
     }
 
@@ -102,6 +104,7 @@ export async function POST(
     };
 
     await CommentsDB.save(comment);
+
 
     // Notify Admin
     const siteUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';

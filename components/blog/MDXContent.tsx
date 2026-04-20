@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { MDXRemote, MDXRemoteSerializeResult } from 'next-mdx-remote';
-import { Typography, Box, Link as MuiLink, useTheme, alpha, Button } from '@mui/material';
+import { Typography, Box, Link as MuiLink, useTheme, alpha, Button, useMediaQuery } from '@mui/material';
 import Link from 'next/link';
 import { tokens } from '@/lib/theme-tokens';
 import ImageLightbox from '@/components/common/ImageLightbox';
@@ -47,17 +47,27 @@ const normalizeHref = (href?: string): string => {
 
 const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) => {
   const [copied, setCopied] = React.useState(false);
+  const isMobile = useMediaQuery('(max-width:600px)');
+  const [isWrapped, setIsWrapped] = React.useState(isMobile);
   const preRef = React.useRef<HTMLPreElement>(null);
+
+  // Sync wrap state with mobile on initial load, but allow manual override
+  React.useEffect(() => {
+    setIsWrapped(isMobile);
+  }, [isMobile]);
 
   const handleCopy = () => {
     if (preRef.current) {
-      // Get only the text content
       const code = preRef.current.innerText;
       navigator.clipboard.writeText(code).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       });
     }
+  };
+
+  const handleToggleWrap = () => {
+    setIsWrapped(!isWrapped);
   };
 
   return (
@@ -94,22 +104,49 @@ const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>)
           <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#27c93f' }} />
         </Box>
 
-        <Button
-          onClick={handleCopy}
-          size="small"
-          sx={{
-            color: copied ? 'primary.light' : 'rgba(255,255,255,0.7)',
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            textTransform: 'none',
-            minWidth: 0,
-            p: 0,
-            transition: 'color 0.2s',
-            '&:hover': { color: '#fff', bgcolor: 'transparent' },
-          }}
-        >
-          {copied ? 'Copied!' : 'Copy'}
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            onClick={handleToggleWrap}
+            size="small"
+            sx={{
+              color: isWrapped ? 'primary.light' : 'rgba(255,255,255,0.5)',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              textTransform: 'none',
+              minWidth: 0,
+              p: '2px 8px',
+              borderRadius: '4px',
+              bgcolor: isWrapped ? alpha('#fff', 0.05) : 'transparent',
+              transition: 'all 0.2s',
+              border: '1px solid',
+              borderColor: isWrapped ? alpha(tokens.color.primary, 0.3) : 'transparent',
+              '&:hover': { 
+                color: '#fff', 
+                bgcolor: alpha('#fff', 0.1),
+                borderColor: alpha('#fff', 0.2)
+              },
+            }}
+          >
+            Wrap: {isWrapped ? 'On' : 'Off'}
+          </Button>
+
+          <Button
+            onClick={handleCopy}
+            size="small"
+            sx={{
+              color: copied ? 'primary.light' : 'rgba(255,255,255,0.7)',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              textTransform: 'none',
+              minWidth: 0,
+              p: 0,
+              transition: 'color 0.2s',
+              '&:hover': { color: '#fff', bgcolor: 'transparent' },
+            }}
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </Button>
+        </Box>
       </Box>
       <Box
         component="div"
@@ -118,7 +155,17 @@ const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>)
           overflow: 'hidden',
         }}
       >
-        <pre ref={preRef} {...props}>
+        <pre 
+          ref={preRef} 
+          {...props}
+          style={{
+            margin: 0,
+            padding: '16px',
+            whiteSpace: isWrapped ? 'pre-wrap' : 'pre',
+            wordBreak: isWrapped ? 'break-word' : 'normal',
+            overflowX: isWrapped ? 'hidden' : 'auto',
+          }}
+        >
           {children}
         </pre>
       </Box>
@@ -132,11 +179,11 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
       variant="h3"
       component="h1"
       sx={{
-        mt: 10, mb: 4,
-        fontWeight: 600,
+        mt: 6, mb: 3,
+        fontWeight: 700,
         fontFamily: tokens.typography.fontFamily.serif,
         letterSpacing: '-0.02em',
-        lineHeight: 1.2,
+        lineHeight: 1.25,
         color: 'text.primary'
       }}
       {...props}
@@ -147,8 +194,8 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
       variant="h4"
       component="h2"
       sx={{
-        mt: 8, mb: 3,
-        fontWeight: 600,
+        mt: 5, mb: 2,
+        fontWeight: 700,
         fontFamily: tokens.typography.fontFamily.serif,
         letterSpacing: '-0.01em',
         lineHeight: 1.3,
@@ -162,8 +209,8 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
       variant="h5"
       component="h3"
       sx={{
-        mt: 6, mb: 2,
-        fontWeight: 600,
+        mt: 4, mb: 2,
+        fontWeight: 700,
         fontFamily: tokens.typography.fontFamily.serif,
         lineHeight: 1.4,
         color: 'text.primary'
@@ -175,9 +222,9 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
     <Typography
       variant="body1"
       sx={{
-        mb: 4,
-        lineHeight: 1.9,
-        fontSize: '1.3rem',
+        mb: 3,
+        lineHeight: 1.75,
+        fontSize: '1.125rem',
         fontFamily: tokens.typography.fontFamily.serif,
         color: 'text.secondary',
         fontWeight: 400,
@@ -245,12 +292,12 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
         borderLeft: '4px solid',
         borderColor: 'primary.main',
         pl: 5,
-        py: 1.5,
-        my: 10,
+        py: 1,
+        my: 6,
         '& p': {
           mb: 0,
           fontStyle: 'italic',
-          fontSize: '1.5rem',
+          fontSize: '1.25rem',
           fontFamily: tokens.typography.fontFamily.serif,
           color: 'text.primary',
           opacity: 0.8,
@@ -268,7 +315,7 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
     const normalizedSrc = typeof src === 'string' ? src : undefined;
 
     return (
-      <Box sx={{ my: 10, textAlign: 'center' }}>
+      <Box sx={{ my: 6, textAlign: 'center' }}>
         <Box 
           component="img" 
           sx={{ 
@@ -290,10 +337,10 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
     );
   },
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
-    <Box component="ul" sx={{ mb: 4, pl: 4, '& li': { mb: 2, color: 'text.secondary', fontSize: '1.3rem', fontFamily: tokens.typography.fontFamily.serif, lineHeight: 1.8 } }} {...props} />
+    <Box component="ul" sx={{ mb: 3, pl: 4, '& li': { mb: 1.5, color: 'text.secondary', fontSize: '1.125rem', fontFamily: tokens.typography.fontFamily.serif, lineHeight: 1.7 } }} {...props} />
   ),
   ol: (props: React.HTMLAttributes<HTMLOListElement>) => (
-    <Box component="ol" sx={{ mb: 4, pl: 4, '& li': { mb: 2, color: 'text.secondary', fontSize: '1.3rem', fontFamily: tokens.typography.fontFamily.serif, lineHeight: 1.8 } }} {...props} />
+    <Box component="ol" sx={{ mb: 3, pl: 4, '& li': { mb: 1.5, color: 'text.secondary', fontSize: '1.125rem', fontFamily: tokens.typography.fontFamily.serif, lineHeight: 1.7 } }} {...props} />
   ),
 });
 

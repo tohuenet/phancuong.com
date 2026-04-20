@@ -9,6 +9,8 @@ import { vi } from 'date-fns/locale';
 import { tokens } from '@/lib/theme-tokens';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import PushPinIcon from '@mui/icons-material/PushPin';
+import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 import { motion } from 'framer-motion';
 
 interface PostHeaderProps {
@@ -18,6 +20,8 @@ interface PostHeaderProps {
     createdAt: Date;
     readingTime: string;
     tags: Array<{ name: string; slug: string }>;
+    published?: boolean;
+    isPinned?: boolean;
   };
   transitionNames: any;
 }
@@ -34,15 +38,14 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
       <Box component="header" sx={{ mb: 5 }}>
         <ViewTransition name={transitionNames.title} share="post-title-shared">
           <Typography
-            variant="h4"
+            variant="h3"
             className="title-text"
             sx={{
-              fontWeight: 850,
-              fontSize: { xs: '1.5rem', sm: '2.125rem' },
+              fontWeight: 800,
+              fontSize: { xs: '1.5rem', md: '2.5rem' },
               lineHeight: 1.2,
-              letterSpacing: '-0.02em',
+              letterSpacing: '-0.03em',
               color: 'text.primary',
-              textTransform: 'uppercase',
               transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
@@ -50,6 +53,12 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
               wordBreak: 'break-word',
             }}
           >
+            {post.isPinned && (
+              <PushPinIcon sx={{ fontSize: '1.8rem', mr: 2, color: 'primary.main', transform: 'rotate(20deg)' }} />
+            )}
+            {post.published === false && (
+              <HistoryEduIcon sx={{ fontSize: '1.8rem', mr: 2, color: 'warning.main' }} />
+            )}
             {post.title}
           </Typography>
         </ViewTransition>

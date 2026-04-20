@@ -22,6 +22,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PushPinIcon from '@mui/icons-material/PushPin';
+import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 import { motion } from 'framer-motion';
 import { tokens } from '@/lib/theme-tokens';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
@@ -37,6 +38,7 @@ interface PostCardProps {
     readingTime: string;
     tags: Array<{ name: string; slug: string }>;
     thumbnailUrl?: string | null;
+    published?: boolean;
   };
   featured?: boolean;
   isAdmin?: boolean;
@@ -175,6 +177,8 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
               }}
               className="card-image"
             />
+            
+            {/* Draft Badge */}
             {featured && (
               <Box sx={{ 
                 position: 'absolute', 
@@ -190,11 +194,13 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 zIndex: 2,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                transition: 'top 0.3s ease'
               }}>
                 Nổi bật
               </Box>
             )}
+
           </Box>
 
           <CardContent sx={{ 
@@ -237,18 +243,23 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
                 variant={featured ? "h3" : "h5"}
                 component="h2"
                 sx={{
-                  fontWeight: 950,
-                  lineHeight: 1.1,
+                  fontWeight: 800,
+                  lineHeight: 1.2,
                   mb: 2,
                   color: 'text.primary',
-                  letterSpacing: '-0.03em',
+                  letterSpacing: '-0.02em',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                 }}
               >
-                {post.title}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {isAdmin && post.published === false && (
+                    <HistoryEduIcon sx={{ fontSize: featured ? '1.8rem' : '1.4rem', color: 'warning.main' }} />
+                  )}
+                  {post.title}
+                </Box>
               </Typography>
             </ViewTransition>
 

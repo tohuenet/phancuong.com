@@ -20,6 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
 import { tokens } from '@/lib/theme-tokens';
 
@@ -32,6 +33,7 @@ interface PostListItemProps {
     readingTime: string;
     tags: Array<{ name: string; slug: string }>;
     isPinned: boolean;
+    published?: boolean;
   };
   isAdmin?: boolean;
   onDelete?: (id: string) => void;
@@ -45,120 +47,123 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
   const primaryTag = post.tags[0] ?? { name: 'general', slug: 'general' };
 
   return (
-      <Box
-        sx={{
-          py: 2.5,
-          px: { xs: 2, md: 3 },
-          mb: 2,
-          borderRadius: `${tokens.radius.md}px`,
-          bgcolor: alpha(theme.palette.background.paper, 0.4),
-          backdropFilter: 'blur(10px)',
-          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-          position: 'relative',
-          containerType: 'inline-size',
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflow: 'hidden',
-          '&:hover': {
-            borderColor: alpha(theme.palette.primary.main, 0.25),
-            bgcolor: alpha(theme.palette.background.paper, 0.55),
-            '& .action-buttons': { opacity: 1, transform: 'translateX(0)' },
-            '& .title-text': { color: 'primary.main' },
-            '& .glint': {
-              left: '125%',
-            }
+    <Box
+      sx={{
+        py: 2.5,
+        px: { xs: 2, md: 3 },
+        mb: 2,
+        borderRadius: `${tokens.radius.md}px`,
+        bgcolor: alpha(theme.palette.background.paper, 0.4),
+        backdropFilter: 'blur(10px)',
+        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        position: 'relative',
+        containerType: 'inline-size',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'hidden',
+        '&:hover': {
+          borderColor: alpha(theme.palette.primary.main, 0.25),
+          bgcolor: alpha(theme.palette.background.paper, 0.55),
+          '& .action-buttons': { opacity: 1, transform: 'translateX(0)' },
+          '& .title-text': { color: 'primary.main' },
+          '& .glint': {
+            left: '125%',
           }
+        }
+      }}
+    >
+      {/* Premium Glint Effect */}
+      <Box
+        className="glint"
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: '-25%',
+          width: '25%',
+          height: '100%',
+          background: `linear-gradient(to right, transparent, ${alpha(theme.palette.primary.main, 0.05)}, transparent)`,
+          transform: 'skewX(-25deg)',
+          transition: 'left 0.7s ease-in-out',
+          pointerEvents: 'none',
+          zIndex: 0,
         }}
-      >
-        {/* Premium Glint Effect */}
-        <Box
-          className="glint"
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: '-25%',
-            width: '25%',
-            height: '100%',
-            background: `linear-gradient(to right, transparent, ${alpha(theme.palette.primary.main, 0.05)}, transparent)`,
-            transform: 'skewX(-25deg)',
-            transition: 'left 0.7s ease-in-out',
-            pointerEvents: 'none',
-            zIndex: 0,
-          }}
-        />
+      />
 
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
-        {/* Drag Handle (Admin only, during reorder) */}
-        {isAdmin && post.isPinned && (
-          <Box {...dragHandleProps} sx={{ display: { xs: 'none', md: 'block' }, cursor: 'grab', mt: 0.5, color: 'text.secondary', opacity: 0.3, '&:hover': { opacity: 1 } }}>
-            <DragIndicatorIcon fontSize="small" />
-          </Box>
-        )}
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+      {/* Drag Handle (Admin only, during reorder) */}
+      {isAdmin && post.isPinned && (
+        <Box {...dragHandleProps} sx={{ display: { xs: 'none', md: 'block' }, cursor: 'grab', mt: 0.5, color: 'text.secondary', opacity: 0.3, '&:hover': { opacity: 1 } }}>
+          <DragIndicatorIcon fontSize="small" />
+        </Box>
+      )}
 
-        <Box sx={{ flexGrow: 1 }}>
-            {/* Title */}
-            <Link
-              href={`/blog/${post.slug}`}
-              prefetch={true}
-              transitionTypes={['post-open']}
-              style={{ textDecoration: 'none' }}
-            >
-              <ViewTransition name={transitionNames.title} share="post-title-shared">
-                <Typography
-                  variant="h4"
-                  className="title-text"
-                  sx={{
-                    fontWeight: 850,
-                    fontSize: { xs: '1.5rem', sm: '2.125rem' },
-                    lineHeight: 1.2,
-                    letterSpacing: '-0.02em',
-                    color: 'text.primary',
-                    textTransform: 'uppercase',
-                    transition: 'color 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    wordBreak: 'break-word'
-                  }}
-                >
-                  {post.isPinned && (
-                    <PushPinIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'primary.main', transform: 'rotate(20deg)' }} />
-                  )}
-                  {post.title}
-                </Typography>
-              </ViewTransition>
+      <Box sx={{ flexGrow: 1 }}>
+          {/* Title */}
+          <Link
+            href={`/blog/${post.slug}`}
+            prefetch={true}
+            transitionTypes={['post-open']}
+            style={{ textDecoration: 'none' }}
+          >
+            <ViewTransition name={transitionNames.title} share="post-title-shared">
+              <Typography
+                variant="h3"
+                className="title-text"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '1.35rem', md: '1.85rem' },
+                  lineHeight: 1.25,
+                  letterSpacing: '-0.02em',
+                  color: 'text.primary',
+                  transition: 'color 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {post.isPinned && (
+                  <PushPinIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'primary.main', transform: 'rotate(20deg)' }} />
+                )}
+                {isAdmin && post.published === false && (
+                  <HistoryEduIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'warning.main' }} />
+                )}
+                {post.title}
+              </Typography>
+            </ViewTransition>
+          </Link>
+
+          {/* Metadata Row */}
+          <Stack 
+            direction="row" 
+            spacing={1} 
+            sx={{ 
+              mt: 1.5, 
+              alignItems: 'center',
+              flexWrap: 'nowrap',
+              width: '100%',
+              overflow: 'hidden',
+              '& > *': { minWidth: 0 }
+            }}
+          >
+            <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: 'primary.main',
+                  fontWeight: 800,
+                  textTransform: 'lowercase',
+                  letterSpacing: '0.05em',
+                  transition: 'opacity 0.2s ease',
+                  whiteSpace: 'nowrap',
+                  '&:hover': {
+                    opacity: 0.8,
+                    textDecoration: 'underline'
+                  }
+                }}
+              >
+                #{primaryTag.name}
+              </Typography>
             </Link>
 
-            {/* Metadata Row */}
-            <Stack 
-              direction="row" 
-              spacing={1} 
-              sx={{ 
-                mt: 1.5, 
-                alignItems: 'center',
-                flexWrap: 'nowrap',
-                width: '100%',
-                overflow: 'hidden',
-                '& > *': { minWidth: 0 }
-              }}
-            >
-              <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    color: 'primary.main',
-                    fontWeight: 800,
-                    textTransform: 'lowercase',
-                    letterSpacing: '0.05em',
-                    transition: 'opacity 0.2s ease',
-                    whiteSpace: 'nowrap',
-                    '&:hover': {
-                      opacity: 0.8,
-                      textDecoration: 'underline'
-                    }
-                  }}
-                >
-                  #{primaryTag.name}
-                </Typography>
-              </Link>
               
               <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3, flexShrink: 0 }} />
               
