@@ -140,20 +140,10 @@ export default function HTMLContent({ content }: HTMLContentProps) {
       }
     );
 
-    // Demote author-authored headings by one level so they don't compete with
-    // the PostHeader <h1>. <h1> → <h2>, <h2> → <h3>, …, <h5> → <h6>. <h6>
-    // can't go lower so we leave it alone. Fixes Lighthouse's
-    // "Heading elements are not in a sequentially-descending order" when the
-    // article happens to start with a top-level heading.
-    const withDemotedHeadings = withNormalizedLinks.replace(
-      /<(\/?)h([1-5])(\s|>|\/>)/gi,
-      (_m, slash, level, suffix) => `<${slash}h${Number(level) + 1}${suffix}`,
-    );
-
     // Transform editor code blocks to macOS Terminal Code Blocks dynamically.
     // The content is left as plain text inside <code data-highlight> and will be
     // syntax-highlighted (with auto language detection) on the client in a useEffect.
-    const transformed = withDemotedHeadings.replace(
+    const transformed = withNormalizedLinks.replace(
       /<pre[^>]*>([\s\S]*?)<\/pre>/gi,
       (_match, content) => {
         // Strip zero-width-space workaround chars that were injected upstream to
