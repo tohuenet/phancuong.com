@@ -9,8 +9,19 @@ const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Tree-shake named imports from heavy packages into per-symbol imports so
+  // unused MUI components / Lucide icons / date-fns locales don't end up in
+  // the client bundle. Each entry cuts tens-to-hundreds of KB on mobile.
   experimental: {
     viewTransition: true,
+    optimizePackageImports: [
+      '@mui/material',
+      '@mui/icons-material',
+      '@mui/system',
+      'lucide-react',
+      'date-fns',
+      'framer-motion',
+    ],
   },
   images: {
     formats: ['image/avif', 'image/webp'],

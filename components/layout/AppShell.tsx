@@ -16,7 +16,7 @@ import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
 import CloseFullscreenRoundedIcon from '@mui/icons-material/CloseFullscreenRounded';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import { useFeedback } from '../Providers/FeedbackProvider';
 
@@ -96,7 +96,7 @@ export default function AppShell({ children }: AppShellProps) {
             {session?.user && (
               <>
                 {(session.user as any).isAdmin && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
@@ -128,9 +128,9 @@ export default function AppShell({ children }: AppShellProps) {
                         <AddIcon sx={{ fontSize: 20 }} />
                       </IconButton>
                     </Tooltip>
-                  </motion.div>
+                  </m.div>
                 )}
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
@@ -162,7 +162,7 @@ export default function AppShell({ children }: AppShellProps) {
                       <LogoutIcon sx={{ fontSize: 20 }} />
                     </IconButton>
                   </Tooltip>
-                </motion.div>
+                </m.div>
               </>
             )}
           </AnimatePresence>
@@ -171,7 +171,7 @@ export default function AppShell({ children }: AppShellProps) {
               Tooltip so Tooltip's direct child is the IconButton (natively
               focusable); otherwise Tooltip adds tabindex+aria-label to the
               motion.div wrapper, duplicating ARIA labels. */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.05 }}
@@ -200,7 +200,7 @@ export default function AppShell({ children }: AppShellProps) {
                 }}
               >
                 <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
+                  <m.div
                     key={isWide ? 'wide' : 'narrow'}
                     initial={{ rotate: -90, opacity: 0 }}
                     animate={{ rotate: 0, opacity: 1 }}
@@ -218,14 +218,14 @@ export default function AppShell({ children }: AppShellProps) {
                     ) : (
                       <OpenInFullRoundedIcon sx={{ fontSize: 20 }} />
                     )}
-                  </motion.div>
+                  </m.div>
                 </AnimatePresence>
               </IconButton>
             </Tooltip>
-          </motion.div>
+          </m.div>
 
           {/* Theme Toggle - Mirroring Homepage */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ scale: 1.05 }}
@@ -253,7 +253,7 @@ export default function AppShell({ children }: AppShellProps) {
                 }}
               >
                 <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
+                  <m.div
                     key={theme.palette.mode}
                     initial={{ rotate: -90, opacity: 0 }}
                     animate={{ rotate: 0, opacity: 1 }}
@@ -266,11 +266,11 @@ export default function AppShell({ children }: AppShellProps) {
                     ) : (
                       <Moon size={20} strokeWidth={2.5} />
                     )}
-                  </motion.div>
+                  </m.div>
                 </AnimatePresence>
               </IconButton>
             </Tooltip>
-          </motion.div>
+          </m.div>
         </Box>
       </Box>
     );
@@ -417,7 +417,7 @@ export default function AppShell({ children }: AppShellProps) {
           px: { xs: 2, sm: 4 },
         }}
       >
-        <motion.div
+        <m.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.8, ease: tokens.curves.standard }}
@@ -525,7 +525,7 @@ export default function AppShell({ children }: AppShellProps) {
                 Made with passion for perfection
               </Typography>
               
-              <motion.div
+              <m.div
                 animate={{ 
                   scale: [1, 1.2, 1],
                   filter: [
@@ -548,10 +548,10 @@ export default function AppShell({ children }: AppShellProps) {
                     filter: theme.palette.mode === 'dark' ? 'brightness(1.2)' : 'none'
                   }} 
                 />
-              </motion.div>
+              </m.div>
             </Box>
           </Box>
-        </motion.div>
+        </m.div>
       </Box>
 
       {/* Global Floating Glass Toggle */}
@@ -569,7 +569,7 @@ export default function AppShell({ children }: AppShellProps) {
         {/* Admin/User Buttons */}
         <AnimatePresence>
           {!session && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -600,13 +600,13 @@ export default function AppShell({ children }: AppShellProps) {
                   <LogIn size={20} />
                 </IconButton>
               </Tooltip>
-            </motion.div>
+            </m.div>
           )}
 
           {session?.user && (
             <>
               {(session.user as any).isAdmin && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
@@ -638,9 +638,9 @@ export default function AppShell({ children }: AppShellProps) {
                       <AddIcon sx={{ fontSize: 20 }} />
                     </IconButton>
                   </Tooltip>
-                </motion.div>
+                </m.div>
               )}
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
@@ -672,14 +672,14 @@ export default function AppShell({ children }: AppShellProps) {
                     <LogoutIcon sx={{ fontSize: 20 }} />
                   </IconButton>
                 </Tooltip>
-              </motion.div>
+              </m.div>
             </>
           )}
         </AnimatePresence>
 
         {/* Layout Toggle — hidden on mobile. motion.div outside Tooltip so
             Tooltip targets the natively-focusable IconButton directly. */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.05 }}
@@ -709,7 +709,7 @@ export default function AppShell({ children }: AppShellProps) {
               }}
             >
               <AnimatePresence mode="wait" initial={false}>
-                <motion.div
+                <m.div
                   key={isWide ? 'wide' : 'narrow'}
                   initial={{ rotate: -90, opacity: 0 }}
                   animate={{ rotate: 0, opacity: 1 }}
@@ -727,14 +727,14 @@ export default function AppShell({ children }: AppShellProps) {
                   ) : (
                     <OpenInFullRoundedIcon sx={{ fontSize: 20 }} />
                   )}
-                </motion.div>
+                </m.div>
               </AnimatePresence>
             </IconButton>
           </Tooltip>
-        </motion.div>
+        </m.div>
 
         {/* Theme Toggle */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           whileHover={{ scale: 1.05 }}
@@ -762,7 +762,7 @@ export default function AppShell({ children }: AppShellProps) {
               }}
             >
               <AnimatePresence mode="wait" initial={false}>
-                <motion.div
+                <m.div
                   key={theme.palette.mode}
                   initial={{ rotate: -90, opacity: 0 }}
                   animate={{ rotate: 0, opacity: 1 }}
@@ -775,11 +775,11 @@ export default function AppShell({ children }: AppShellProps) {
                   ) : (
                     <Moon size={20} strokeWidth={2.5} />
                   )}
-                </motion.div>
+                </m.div>
               </AnimatePresence>
             </IconButton>
           </Tooltip>
-        </motion.div>
+        </m.div>
       </Box>
     </Box>
   );

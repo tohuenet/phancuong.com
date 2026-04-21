@@ -5,7 +5,7 @@ import { Box, IconButton, Typography, alpha } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 
 interface ImageLightboxProps {
   images: string[];
@@ -62,7 +62,7 @@ export default function ImageLightbox({ images, currentIndex, open, onClose, onN
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -172,7 +172,7 @@ export default function ImageLightbox({ images, currentIndex, open, onClose, onN
 
           {/* Image Display */}
           <AnimatePresence mode="wait">
-            <motion.div
+            <m.div
               key={currentIndex}
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -200,9 +200,9 @@ export default function ImageLightbox({ images, currentIndex, open, onClose, onN
                 }}
                 draggable={false}
               />
-            </motion.div>
+            </m.div>
           </AnimatePresence>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

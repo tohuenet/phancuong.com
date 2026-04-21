@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Box, Typography, Button, Container, alpha, useTheme } from '@mui/material';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import Link from 'next/link';
 import { tokens } from '@/lib/theme-tokens';
 import HomeIcon from '@mui/icons-material/Home';
@@ -55,7 +55,7 @@ export default function NotFound() {
           height: '100%' 
         }}
       >
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -69,7 +69,7 @@ export default function NotFound() {
             width: { xs: 140, sm: 180, md: 240 },
             height: { xs: 140, sm: 180, md: 240 }
           }}>
-            <motion.svg 
+            <m.svg 
               width="100%" 
               height="100%" 
               viewBox="0 0 240 240" 
@@ -79,14 +79,14 @@ export default function NotFound() {
               transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
             >
               <circle cx="120" cy="120" r="100" stroke={theme.palette.primary.main} strokeWidth="0.5" strokeDasharray="10 5" opacity="0.3" />
-              <motion.circle 
+              <m.circle 
                 cx="120" cy="120" r="80" 
                 stroke={theme.palette.primary.main} 
                 strokeWidth="1" 
                 animate={{ r: [80, 85, 80], opacity: [0.2, 0.4, 0.2] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
-              <motion.circle 
+              <m.circle 
                 cx="120" cy="120" r="60" 
                 stroke={theme.palette.primary.main} 
                 strokeWidth="1.5"
@@ -95,13 +95,13 @@ export default function NotFound() {
               />
               <path d="M120 40L189.282 160H50.7179L120 40Z" stroke={theme.palette.primary.main} strokeWidth="1" opacity="0.3" />
               <path d="M120 200L50.7179 80H189.282L120 200Z" stroke={theme.palette.primary.main} strokeWidth="1" opacity="0.3" />
-              <motion.circle 
+              <m.circle 
                 cx="120" cy="120" r="10" 
                 fill={theme.palette.primary.main}
                 animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.9, 0.5] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               />
-            </motion.svg>
+            </m.svg>
           </Box>
 
           {/* 404 Text - Scaled for Mobile */}
@@ -164,7 +164,7 @@ export default function NotFound() {
               VỀ TRANG CHỦ
             </Button>
           </Box>
-        </motion.div>
+        </m.div>
       </Container>
     </Box>
   );

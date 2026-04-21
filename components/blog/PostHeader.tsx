@@ -11,7 +11,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 
 interface PostHeaderProps {
   post: {
@@ -30,7 +30,7 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
   const primaryTag = post.tags[0] ?? { name: 'general', slug: 'general' };
 
   return (
-    <motion.div
+    <m.div
       initial={{ y: 12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
@@ -145,6 +145,6 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
           </Stack>
         </Stack>
       </Box>
-    </motion.div>
+    </m.div>
   );
 }

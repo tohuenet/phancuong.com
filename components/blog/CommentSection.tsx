@@ -18,7 +18,7 @@ import {
 import { useSession, signIn } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 const CommentEditor = dynamic(() => import('./CommentEditor'), { ssr: false });
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useFeedback } from '@/components/Providers/FeedbackProvider';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -292,7 +292,7 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
     const isPending = typeof comment.id === 'string' && comment.id.startsWith('optimistic-');
 
     return (
-      <motion.article
+      <m.article
         key={comment.id}
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: isPending ? 0.6 : 1, y: 0 }}
@@ -642,7 +642,7 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
             )}
           </Box>
         </Box>
-      </motion.article>
+      </m.article>
     );
   };
 

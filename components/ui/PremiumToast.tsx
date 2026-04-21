@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Typography, alpha, useTheme } from '@mui/material';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
@@ -37,7 +37,7 @@ export const PremiumToast = ({ message, type = 'success' }: PremiumToastProps) =
   };
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20, scale: 0.9, filter: 'blur(10px)' }}
       animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
       exit={{ opacity: 0, scale: 0.9, filter: 'blur(10px)' }}
@@ -137,6 +137,6 @@ export const PremiumToast = ({ message, type = 'success' }: PremiumToastProps) =
           }}
         />
       </Box>
-    </motion.div>
+    </m.div>
   );
 };

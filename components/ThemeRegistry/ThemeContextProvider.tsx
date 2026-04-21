@@ -5,6 +5,7 @@ import { flushSync } from 'react-dom';
 import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 import { Components, Theme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import LazyMotionProvider from '@/components/animations/LazyMotionProvider';
 
 declare module '@mui/material/styles' {
   interface Palette {
@@ -455,7 +456,7 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
       <LayoutModeContext.Provider value={layoutMode}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          {children}
+          <LazyMotionProvider>{children}</LazyMotionProvider>
         </ThemeProvider>
       </LayoutModeContext.Provider>
     </ColorModeContext.Provider>

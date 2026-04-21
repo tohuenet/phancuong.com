@@ -15,7 +15,14 @@ import CommentSection from '@/components/blog/CommentSection';
 import { getVisibleCommentsForPost } from '@/lib/comments';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
 import PostHeader from '@/components/blog/PostHeader';
-import ReadingProgressBar from '@/components/common/ReadingProgressBar';
+import dynamic from 'next/dynamic';
+// Defer the progress bar — it's decorative, not above-the-fold. Next 14+
+// forbids `ssr: false` in Server Components; dropping it is fine because
+// the bar's scroll listener only runs in useEffect anyway.
+const ReadingProgressBar = dynamic(
+  () => import('@/components/common/ReadingProgressBar'),
+  { loading: () => null },
+);
 
 interface PostDetailPageProps {
   params: Promise<{ slug: string }>;

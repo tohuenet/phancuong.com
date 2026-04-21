@@ -4,8 +4,9 @@ import AuthProvider from '@/components/Providers/AuthProvider';
 import ThemeContextProvider from '@/components/ThemeRegistry/ThemeContextProvider';
 import AppShell from '@/components/layout/AppShell';
 import FeedbackProvider from '@/components/Providers/FeedbackProvider';
-import { Toaster } from 'sonner';
+import DeferredToaster from '@/components/Providers/DeferredToaster';
 import Box from '@mui/material/Box';
+import { auth } from '@/auth';
 
 // Only the weights actually used across typography + logo + buttons.
 // Dropping 100/200/500 cuts ~30% of font payload on mobile without any
@@ -69,18 +70,21 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false, email: false, address: false },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Resolve session server-side and pass into SessionProvider so the client
+  // doesn't fire an extra /api/auth/session XHR during hydration.
+  const session = await auth();
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${beVietnamPro.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
-        <AuthProvider>
+        <AuthProvider session={session}>
           <AppRouterCacheProvider>
             <ThemeContextProvider>
               <FeedbackProvider>
                 <AppShell>
                   {children}
                 </AppShell>
-                <Toaster position="top-right" expand={false} />
+                <DeferredToaster />
               </FeedbackProvider>
             </ThemeContextProvider>
           </AppRouterCacheProvider>

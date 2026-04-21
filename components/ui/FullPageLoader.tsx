@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Box, Typography, alpha, useTheme } from '@mui/material';
 
 interface FullPageLoaderProps {
@@ -18,7 +18,7 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
   return (
     <AnimatePresence>
       {isLoading && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -40,7 +40,7 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
         >
           {/* Main Animated Orb */}
           <Box sx={{ position: 'relative', width: 120, height: 120, mb: 4 }}>
-            <motion.div
+            <m.div
               animate={{
                 scale: [1, 1.2, 1],
                 rotate: [0, 180, 360],
@@ -61,7 +61,7 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
               }}
             />
             
-            <motion.div
+            <m.div
               animate={{
                 scale: [1.1, 1, 1.1],
                 rotate: [360, 180, 0],
@@ -95,7 +95,7 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
                 justifyContent: 'center',
               }}
             >
-              <motion.div
+              <m.div
                 animate={{
                   scale: [1, 1.1, 1],
                 }}
@@ -114,12 +114,12 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
-              </motion.div>
+              </m.div>
             </Box>
           </Box>
 
           {/* Loading Text */}
-          <motion.div
+          <m.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -138,12 +138,12 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
             >
               {message}
             </Typography>
-          </motion.div>
+          </m.div>
 
           {/* Sub-text animation */}
           <Box sx={{ mt: 1, display: 'flex', gap: 0.5 }}>
             {[0, 1, 2].map((i) => (
-              <motion.div
+              <m.div
                 key={i}
                 animate={{
                   opacity: [0, 1, 0],
@@ -162,7 +162,7 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
               />
             ))}
           </Box>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

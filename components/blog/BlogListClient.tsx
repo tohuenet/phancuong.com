@@ -12,7 +12,7 @@ import { useFeedback } from '@/components/Providers/FeedbackProvider';
 import PostListItem from '@/components/blog/PostListItem';
 import BlogSearchFilter from '@/components/blog/BlogSearchFilter';
 import { tokens } from '@/lib/theme-tokens';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { m, AnimatePresence, Reorder } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -201,7 +201,7 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
           <AnimatePresence mode="popLayout">
             {otherPosts.map((post) => (
-              <motion.div
+              <m.div
                 key={post.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -215,12 +215,12 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
                     onDelete={handleDelete}
                     onPin={handlePin}
                   />
-              </motion.div>
+              </m.div>
             ))}
           </AnimatePresence>
 
           {!loading && pinnedPosts.length === 0 && otherPosts.length === 0 && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -228,7 +228,7 @@ export default function BlogListClient({ posts: initialPosts, pages, currentPage
               <Box className="glass" sx={{ py: 8, textAlign: 'center', bgcolor: alpha(theme.palette.action.hover, 0.05) }}>
                 <Typography variant="h5" color="text.secondary" sx={{ fontWeight: 600 }}>Không tìm thấy bài viết nào.</Typography>
               </Box>
-            </motion.div>
+            </m.div>
           )}
         </Box>
       </Box>
