@@ -1,0 +1,19 @@
+{
+  "title": "Grafana LGTM & Alloy (1)",
+  "slug": "trien-khai-obsservability-grafana-lgtm-alloy-s2qv0",
+  "content": "<h1><strong>Phần 1: Giới thiệu</strong></h1><h2>Observability là gì?</h2><p><strong>Observability</strong> (Khả năng quan sát) là khả năng hiểu rõ toàn bộ hệ thống chỉ qua dữ liệu telemetry, giúp bạn nhanh chóng phát hiện, chẩn đoán và giải quyết vấn đề mà không cần đoán mò.</p><p>Stack hiện đại không chỉ dừng lại ở Metrics, Logs, Traces mà còn bao gồm <strong>Continuous Profiling</strong> (Pyroscope) và <strong>Auto-instrumentation không cần code</strong> (Beyla).</p><h2>Tại sao nên dùng stack Grafana LGTM + Alloy này?</h2><p>Stack cũ của bạn (Prometheus + nhiều exporter riêng lẻ + OTEL Collector + Alertmanager) dù đã tốt nhưng đang gặp các hạn chế:</p><ul><li><p>Quá nhiều service và agent</p></li><li><p>Config phân mảnh, khó quản lý</p></li><li><p>Khó correlate sâu giữa các loại dữ liệu</p></li><li><p>Chưa có Profiling và Auto-instrumentation</p></li></ul><p><strong>Grafana Full Observability Stack</strong> (Loki + Grafana + Tempo + Mimir + Alloy + Pyroscope + Beyla) là giải pháp <strong>được Grafana Labs khuyến nghị mạnh nhất năm 2026</strong>.</p><h2>Lợi ích nổi bật so với stack cũ</h2><img class=\"editor-image\" src=\"blob:https://phancuong.com/6a56483a-4123-43e7-b745-7d6419eb6b25\"><h2>Các thành phần chính trong Stack</h2><img class=\"editor-image\" src=\"blob:https://phancuong.com/c1b67f5b-3e1c-41d2-9bd8-a77ecf25e441\"><h2>Kiến trúc tổng thể</h2><img class=\"editor-image\" src=\"blob:https://phancuong.com/3b1ebe26-bca4-48ed-b948-df2adacc89dd\"><h2>Hardware requirements</h2><p><strong>Môi trường Demo / Nhỏ (dưới 30 services):</strong></p><ul><li><p><strong>Alloy + Beyla</strong>: Global service – 0.5–1 CPU, 768MB–1.5GB RAM mỗi node</p></li><li><p><strong>Mimir + Loki + Tempo + Pyroscope</strong>: 1–2 CPU + 2–4GB RAM mỗi service</p></li><li><p><strong>Grafana</strong>: 0.5–1 CPU + 1GB RAM</p></li><li><p><strong>Tổng ước tính</strong>: 6–10 CPU + 16–24GB RAM cho toàn stack</p></li></ul><p><strong>Production khuyến nghị:</strong></p><ul><li><p>Sử dụng <strong>object storage</strong> (MinIO hoặc S3) cho Loki, Mimir, Tempo, Pyroscope</p></li><li><p>SSD/NVMe cho local storage</p></li><li><p>Alloy &amp; Beyla chạy ở chế độ Global trên mọi worker node</p></li></ul><p><strong>Yêu cầu bắt buộc:</strong></p><ul><li><p>Docker Swarm đã hoạt động ổn định</p></li><li><p>Network overlay (observability-net)</p></li><li><p>Quyền mount /var/run/docker.sock và một số privileged mode cho Beyla</p></li></ul><hr><p><strong>Kết thúc Phần 1</strong></p><p>Bạn đã nắm được bức tranh tổng quan về <strong>Full Grafana Observability Stack</strong> hiện đại nhất hiện nay.</p>",
+  "excerpt": "",
+  "thumbnailUrl": "",
+  "published": true,
+  "order": 0,
+  "id": "b6728d7c-d12e-48b6-9d7e-5afdce04dd6c",
+  "createdAt": "2026-04-20T08:08:57.753Z",
+  "updatedAt": "2026-04-20T22:55:01.553Z",
+  "tags": [
+    {
+      "id": "5d5f6fe1-ad8d-43c4-916b-04579976f4f2",
+      "name": "observability",
+      "slug": "observability"
+    }
+  ]
+}
