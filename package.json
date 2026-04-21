@@ -104,6 +104,9 @@
         "next",
         "nodemailer"
       ]
-    }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
