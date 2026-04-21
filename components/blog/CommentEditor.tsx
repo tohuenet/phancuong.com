@@ -91,7 +91,11 @@ export default function CommentEditor({
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({ codeBlock: false }),
+      StarterKit.configure({
+        codeBlock: false,
+        link: false,
+        underline: false,
+      }),
       Image.configure({ HTMLAttributes: { class: 'comment-image' } }),
       Link.configure({
         openOnClick: false,
@@ -341,32 +345,32 @@ export default function CommentEditor({
       >
         <Stack direction="row" spacing={0.25} sx={{ ml: -0.5, alignItems: 'center' }}>
           <Tooltip title="Bold (Ctrl+B)">
-            <IconButton size="small" onClick={() => editor.chain().focus().toggleBold().run()} color={editor.isActive('bold') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><Bold size={16}/></IconButton>
+            <IconButton aria-label="Bold" size="small" onClick={() => editor.chain().focus().toggleBold().run()} color={editor.isActive('bold') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><Bold size={16}/></IconButton>
           </Tooltip>
           <Tooltip title="Italic (Ctrl+I)">
-            <IconButton size="small" onClick={() => editor.chain().focus().toggleItalic().run()} color={editor.isActive('italic') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><Italic size={16}/></IconButton>
+            <IconButton aria-label="Italic" size="small" onClick={() => editor.chain().focus().toggleItalic().run()} color={editor.isActive('italic') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><Italic size={16}/></IconButton>
           </Tooltip>
           <Tooltip title="Quote">
-            <IconButton size="small" onClick={() => editor.chain().focus().toggleBlockquote().run()} color={editor.isActive('blockquote') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><Quote size={16}/></IconButton>
+            <IconButton aria-label="Quote" size="small" onClick={() => editor.chain().focus().toggleBlockquote().run()} color={editor.isActive('blockquote') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><Quote size={16}/></IconButton>
           </Tooltip>
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 16, alignSelf: 'center', opacity: 0.1 }} />
 
           <Tooltip title="Code">
-            <IconButton size="small" onClick={() => editor.chain().focus().toggleCode().run()} color={editor.isActive('code') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><Code size={16}/></IconButton>
+            <IconButton aria-label="Inline code" size="small" onClick={() => editor.chain().focus().toggleCode().run()} color={editor.isActive('code') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><Code size={16}/></IconButton>
           </Tooltip>
           <Tooltip title="Link">
-            <IconButton size="small" onClick={() => {
+            <IconButton aria-label="Insert link" size="small" onClick={() => {
               const url = prompt('Nhập link:');
               if (url) editor.chain().focus().setLink({ href: url }).run();
             }} color={editor.isActive('link') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><LinkIcon size={16}/></IconButton>
           </Tooltip>
           <Tooltip title="List">
-            <IconButton size="small" onClick={() => editor.chain().focus().toggleBulletList().run()} color={editor.isActive('bulletList') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><List size={16}/></IconButton>
+            <IconButton aria-label="Bullet list" size="small" onClick={() => editor.chain().focus().toggleBulletList().run()} color={editor.isActive('bulletList') ? 'primary' : 'inherit'} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}><List size={16}/></IconButton>
           </Tooltip>
           <Tooltip title={isUploading ? 'Đang tải ảnh…' : 'Đính kèm ảnh'}>
             <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <IconButton size="small" onClick={addImage} disabled={isUploading} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}>
+              <IconButton aria-label="Attach image" size="small" onClick={addImage} disabled={isUploading} sx={{ borderRadius: 1.5, opacity: 0.7, '&:hover': { opacity: 1 } }}>
                 {isUploading ? <CircularProgress size={16} /> : <ImageIcon size={16}/>}
               </IconButton>
             </Box>

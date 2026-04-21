@@ -39,6 +39,7 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
         <ViewTransition name={transitionNames.title} share="post-title-shared">
           <Typography
             variant="h3"
+            component="h1"
             className="title-text"
             sx={{
               fontWeight: 800,

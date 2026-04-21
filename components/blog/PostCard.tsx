@@ -23,7 +23,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
-import { motion } from 'framer-motion';
 import { tokens } from '@/lib/theme-tokens';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
 
@@ -53,10 +52,17 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
   const primaryTag = post.tags[0];
 
   return (
-    <motion.div
-      whileHover={{ y: -8 }}
-      transition={{ duration: 0.4, ease: tokens.curves.standard }}
-      style={{ height: '100%', position: 'relative' }}
+    <Box
+      sx={{
+        height: '100%',
+        position: 'relative',
+        transition: `transform ${tokens.duration.medium4}ms ${tokens.transitions.emphasizedDecelerate}`,
+        '&:hover': { transform: 'translateY(-8px)' },
+        '@media (prefers-reduced-motion: reduce)': {
+          transition: 'none',
+          '&:hover': { transform: 'none' },
+        },
+      }}
     >
       <Card
         className="glass"
@@ -100,14 +106,15 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
             }}
           >
             <Tooltip title={post.isPinned ? "Bỏ ghim" : "Ghim bài viết"}>
-              <IconButton 
-                size="small" 
+              <IconButton
+                aria-label={post.isPinned ? 'Bỏ ghim bài viết' : 'Ghim bài viết'}
+                size="small"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   onPin?.(post.id);
                 }}
-                sx={{ 
+                sx={{
                   color: post.isPinned ? 'primary.main' : 'inherit',
                   '& svg': {
                     transform: post.isPinned ? 'rotate(90deg)' : 'none',
@@ -120,9 +127,10 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
               </IconButton>
             </Tooltip>
             <Tooltip title="Chỉnh sửa">
-              <IconButton 
-                size="small" 
-                component={Link} 
+              <IconButton
+                aria-label="Chỉnh sửa bài viết"
+                size="small"
+                component={Link}
                 href={`/admin/posts/edit/${post.id}`}
                 sx={{ '&:hover': { color: 'primary.main' } }}
               >
@@ -130,9 +138,10 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
               </IconButton>
             </Tooltip>
             <Tooltip title="Xóa bài viết">
-              <IconButton 
-                size="small" 
-                color="error" 
+              <IconButton
+                aria-label="Xóa bài viết"
+                size="small"
+                color="error"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -156,27 +165,53 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
           }}
         >
           {/* Thumbnail Container */}
-          <Box sx={{ 
+          <Box sx={{
             width: { xs: '100%', md: featured ? '55%' : '100%' },
             aspectRatio: featured ? { xs: '16/9', md: 'auto' } : '16/9',
             position: 'relative',
             overflow: 'hidden',
             flexShrink: 0,
             minHeight: featured ? { md: 320 } : 'auto',
+            // Painted placeholder sits behind <Image>; shows when thumbnail
+            // is missing so we don't have to ship a 1600px Unsplash fallback.
+            background: post.thumbnailUrl
+              ? 'transparent'
+              : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.22)} 0%, ${alpha(theme.palette.tertiary, 0.18)} 100%)`,
           }}>
-            <Image
-              src={post.thumbnailUrl || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&q=80&w=1600'}
-              alt={post.title}
-              fill
-              priority={featured}
-              loading={featured ? 'eager' : 'lazy'}
-              sizes={featured ? "(max-width: 800px) 100vw, 440px" : "(max-width: 800px) 100vw, 800px"}
-              style={{ 
-                objectFit: 'cover',
-                transition: `transform 0.8s ${tokens.transitions.standard}`,
-              }}
-              className="card-image"
-            />
+            {post.thumbnailUrl && (
+              <Image
+                src={post.thumbnailUrl}
+                alt={post.title}
+                fill
+                priority={featured}
+                loading={featured ? 'eager' : 'lazy'}
+                sizes={featured ? "(max-width: 800px) 100vw, 440px" : "(max-width: 800px) 100vw, 800px"}
+                style={{
+                  objectFit: 'cover',
+                  transition: `transform 0.8s ${tokens.transitions.standard}`,
+                }}
+                className="card-image"
+              />
+            )}
+            {!post.thumbnailUrl && (
+              <Box
+                aria-hidden
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: alpha(theme.palette.primary.main, 0.5),
+                  fontFamily: tokens.typography.fontFamily.mono,
+                  fontSize: 'clamp(2rem, 8vw, 4rem)',
+                  fontWeight: 800,
+                  letterSpacing: '-0.05em',
+                  userSelect: 'none',
+                }}
+              >
+                {(post.title || '').trim().charAt(0).toUpperCase() || '#'}
+              </Box>
+            )}
             
             {/* Draft Badge */}
             {featured && (
@@ -301,6 +336,6 @@ export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: P
           </CardContent>
         </CardActionArea>
       </Card>
-    </motion.div>
+    </Box>
   );
 }

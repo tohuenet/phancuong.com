@@ -28,6 +28,11 @@ import ForumRoundedIcon from '@mui/icons-material/ForumRounded';
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded';
 import { tokens } from '@/lib/theme-tokens';
 import ImageLightbox from '@/components/common/ImageLightbox';
+import {
+  AuthorAvatar,
+  TextAction,
+  buildCommentContentSx,
+} from './CommentPrimitives';
 
 interface EditHistory {
   content: string;
@@ -50,75 +55,18 @@ interface Comment {
 
 interface CommentSectionProps {
   postSlug: string;
+  // Server-rendered initial comments so the list paints on first render
+  // and the client skips the fetch-on-mount waterfall.
+  initialComments?: Comment[];
 }
 
-// Seeded hue generator so each author gets a stable avatar color.
-function stringToHue(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
-  return Math.abs(h) % 360;
-}
-
-function AuthorAvatar({
-  name,
-  image,
-  size = 36,
-}: {
-  name: string;
-  image?: string | null;
-  size?: number;
-}) {
-  if (image) {
-    return (
-      <Box
-        component="img"
-        src={image}
-        alt={name}
-        sx={{
-          width: size,
-          height: size,
-          borderRadius: '50%',
-          objectFit: 'cover',
-          flexShrink: 0,
-        }}
-      />
-    );
-  }
-  const letter = (name || '?').trim().charAt(0).toUpperCase() || '?';
-  const hue = stringToHue(name || 'anon');
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        flexShrink: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#fff',
-        fontWeight: 700,
-        fontSize: size * 0.42,
-        lineHeight: 1,
-        letterSpacing: '-0.02em',
-        background: `linear-gradient(135deg, hsl(${hue} 72% 55%), hsl(${(hue + 38) % 360} 72% 42%))`,
-        boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.16)`,
-        userSelect: 'none',
-      }}
-    >
-      {letter}
-    </Box>
-  );
-}
-
-export default function CommentSection({ postSlug }: CommentSectionProps) {
+export default function CommentSection({ postSlug, initialComments }: CommentSectionProps) {
   const { data: session } = useSession();
   const theme = useTheme();
   const { confirm, notify } = useFeedback();
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<Comment[]>(initialComments ?? []);
   const [newComment, setNewComment] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialComments);
   const [error, setError] = useState<string | null>(null);
 
   const [submittingId, setSubmittingId] = useState<string | null>(null);
@@ -175,8 +123,10 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
   }, [postSlug]);
 
   useEffect(() => {
+    // Skip refetch if SSR already provided the initial list.
+    if (initialComments) return;
     fetchComments();
-  }, [fetchComments]);
+  }, [fetchComments, initialComments]);
 
   const handleReplyClick = (comment: Comment) => {
     setReplyToId(replyToId === comment.id ? null : comment.id);
@@ -194,10 +144,34 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
     setSubmittingId(currentSubmittingId);
     setError(null);
 
-    try {
-      const targetComment = comments.find((c) => c.id === parentId);
-      const rootParentId = targetComment?.parentId || parentId;
+    const targetComment = comments.find((c) => c.id === parentId);
+    const rootParentId = targetComment?.parentId || parentId;
 
+    // Optimistic insert — show the comment immediately with a temporary id
+    // prefixed `optimistic-` so we can swap it with the server copy later.
+    const tempId = `optimistic-${Date.now()}`;
+    const now = new Date().toISOString();
+    const optimistic: Comment = {
+      id: tempId,
+      parentId: rootParentId ?? null,
+      authorName: session?.user?.name ?? 'Bạn',
+      authorEmail: session?.user?.email ?? '',
+      authorImage: session?.user?.image ?? null,
+      content,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setComments((prev) => [optimistic, ...prev]);
+
+    // Reset the composer immediately so the user sees their input clear.
+    if (rootParentId) {
+      setReplyToId(null);
+      setReplyContent('');
+    } else {
+      setNewComment('');
+    }
+
+    try {
       const res = await fetch(`/api/blog/${postSlug}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -205,23 +179,25 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
       });
 
       if (res.ok) {
-        const created = await res.json();
-        setComments((prev) => [created, ...prev]);
+        const created: Comment = await res.json();
+        // Swap the optimistic entry for the server copy.
+        setComments((prev) => prev.map((c) => (c.id === tempId ? created : c)));
         notify('Đã đăng bình luận thành công!', 'success');
-        if (rootParentId) {
-          setReplyToId(null);
-          setReplyContent('');
-        } else {
-          setNewComment('');
-        }
       } else {
         const data = await res.json();
         const msg = data.error || 'Không thể đăng bình luận.';
+        setComments((prev) => prev.filter((c) => c.id !== tempId));
+        // Restore the composer input so the user doesn't lose their draft.
+        if (rootParentId) setReplyContent(content);
+        else setNewComment(content);
         setError(msg);
         notify(msg, 'error');
       }
     } catch (err) {
       const msg = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+      setComments((prev) => prev.filter((c) => c.id !== tempId));
+      if (rootParentId) setReplyContent(content);
+      else setNewComment(content);
       setError(msg);
       notify(msg, 'error');
     } finally {
@@ -306,170 +282,20 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
     }
   };
 
-  // Shared style for content area — constrains all rich-text children so
-  // images, code blocks, quotes, attachments and long tokens never break the
-  // column width regardless of how much the user pastes in.
-  const contentSx = (isReply: boolean) => ({
-    mt: 0.5,
-    color: 'text.primary',
-    fontSize: isReply ? '0.9rem' : '0.95rem',
-    lineHeight: 1.65,
-    wordBreak: 'break-word' as const,
-    overflowWrap: 'anywhere' as const,
-    '& p': { mb: 1, '&:last-child': { mb: 0 } },
-    '& a.comment-link, & a': {
-      color: 'primary.main',
-      textDecoration: 'none',
-      borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-      transition: 'border-color 0.2s',
-      '&:hover': { borderBottomColor: theme.palette.primary.main },
-    },
-    '& .comment-mention': {
-      color: 'primary.main',
-      fontWeight: 700,
-      bgcolor: alpha(theme.palette.primary.main, 0.08),
-      px: 0.75,
-      py: 0.15,
-      borderRadius: '999px',
-      textDecoration: 'none',
-      fontSize: '0.85em',
-    },
-    '& .comment-image': {
-      maxWidth: 160,
-      maxHeight: 160,
-      width: 'auto',
-      height: 'auto',
-      objectFit: 'cover',
-      borderRadius: 1.5,
-      my: 1,
-      mr: 1,
-      display: 'inline-block',
-      verticalAlign: 'top',
-      cursor: 'zoom-in',
-      border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
-      transition: 'transform 0.2s ease',
-      '&:hover': { transform: 'scale(1.02)' },
-    },
-    '& .comment-attachments': {
-      mt: 1.25,
-      display: 'grid',
-      gridTemplateColumns: {
-        xs: 'repeat(3, 1fr)',
-        sm: 'repeat(auto-fill, minmax(112px, 1fr))',
-      },
-      gap: 0.75,
-      maxWidth: 420,
-    },
-    '& .comment-attachment': {
-      width: '100%',
-      aspectRatio: '1 / 1',
-      height: 'auto',
-      objectFit: 'cover',
-      borderRadius: 1.5,
-      cursor: 'zoom-in',
-      border: `1px solid ${alpha(theme.palette.divider, 0.15)}`,
-      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-      '&:hover': {
-        transform: 'scale(1.02)',
-        boxShadow: `0 8px 24px ${alpha(theme.palette.common.black, 0.25)}`,
-      },
-    },
-    '& blockquote': {
-      borderLeft: `3px solid ${alpha(theme.palette.primary.main, 0.35)}`,
-      pl: 1.5,
-      py: 0.25,
-      my: 1,
-      fontStyle: 'italic',
-      color: alpha(theme.palette.text.primary, 0.75),
-    },
-    '& pre': {
-      my: 1.25,
-      p: 1.5,
-      borderRadius: 2,
-      bgcolor: theme.palette.mode === 'dark' ? '#0d1117' : '#f6f8fa',
-      color: theme.palette.mode === 'dark' ? '#e6edf3' : '#24292f',
-      border: `1px solid ${alpha(theme.palette.divider, 0.18)}`,
-      fontFamily: tokens.typography.fontFamily.mono,
-      fontSize: '0.82rem',
-      lineHeight: 1.55,
-      maxHeight: 360,
-      overflow: 'auto',
-      whiteSpace: 'pre',
-    },
-    '& code': {
-      fontFamily: tokens.typography.fontFamily.mono,
-      fontSize: '0.88em',
-      bgcolor: alpha(theme.palette.primary.main, 0.08),
-      color: 'primary.main',
-      px: 0.65,
-      py: 0.15,
-      borderRadius: 0.75,
-    },
-    '& pre code': {
-      bgcolor: 'transparent',
-      color: 'inherit',
-      p: 0,
-      borderRadius: 0,
-      fontSize: 'inherit',
-    },
-    '& ul, & ol': { pl: 2.5, my: 1 },
-    '& li': { mb: 0.25 },
-  });
-
-  // Small text-action button (M3 ghost text button with subtle hover wash).
-  const TextAction = ({
-    children,
-    onClick,
-    tone = 'neutral',
-  }: {
-    children: React.ReactNode;
-    onClick: () => void;
-    tone?: 'neutral' | 'danger' | 'primary';
-  }) => {
-    const color =
-      tone === 'danger'
-        ? theme.palette.error.main
-        : tone === 'primary'
-        ? theme.palette.primary.main
-        : theme.palette.text.secondary;
-    return (
-      <Button
-        size="small"
-        onClick={onClick}
-        disableRipple
-        sx={{
-          minWidth: 0,
-          px: 1,
-          py: 0.25,
-          height: 26,
-          fontSize: '0.75rem',
-          fontWeight: 700,
-          letterSpacing: '0.01em',
-          textTransform: 'none',
-          color,
-          borderRadius: '999px',
-          bgcolor: 'transparent',
-          '&:hover': {
-            bgcolor: alpha(color, 0.1),
-          },
-        }}
-      >
-        {children}
-      </Button>
-    );
-  };
+  const contentSx = (isReply: boolean) => buildCommentContentSx(theme, isReply);
 
   const renderComment = (comment: any, isReply: boolean = false) => {
     const isOwner = session?.user?.email === comment.authorEmail;
     const isEditing = editingId === comment.id;
     const isEdited = comment.editHistory && comment.editHistory.length > 0;
     const isReplying = replyToId === comment.id;
+    const isPending = typeof comment.id === 'string' && comment.id.startsWith('optimistic-');
 
     return (
       <motion.article
         key={comment.id}
         initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: isPending ? 0.6 : 1, y: 0 }}
         transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
         style={{ display: 'block' }}
       >
@@ -614,6 +440,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
               >
                 {session && (
                   <TextAction
+                    theme={theme}
                     tone={isReplying ? 'primary' : 'neutral'}
                     onClick={() => handleReplyClick(comment)}
                   >
@@ -634,6 +461,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                 >
                   {isOwner && (
                     <TextAction
+                      theme={theme}
                       onClick={() => {
                         setEditingId(comment.id);
                         setEditContent(comment.content);
@@ -643,13 +471,14 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
                     </TextAction>
                   )}
                   {(isOwner || isAdmin) && (
-                    <TextAction tone="danger" onClick={() => handleDelete(comment.id)}>
+                    <TextAction theme={theme} tone="danger" onClick={() => handleDelete(comment.id)}>
                       Xoá
                     </TextAction>
                   )}
                   {isAdmin && (
                     <Tooltip title="Xem thông tin quản trị">
                       <IconButton
+                        aria-label="Xem thông tin quản trị"
                         size="small"
                         onClick={() =>
                           setExpandedAdminId(
@@ -837,6 +666,7 @@ export default function CommentSection({ postSlug }: CommentSectionProps) {
         />
         <Typography
           variant="h5"
+          component="h2"
           sx={{
             fontWeight: 800,
             fontFamily: tokens.typography.fontFamily.serif,

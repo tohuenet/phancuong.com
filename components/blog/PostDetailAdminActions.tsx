@@ -86,10 +86,11 @@ export default function PostDetailAdminActions({ id, slug, initialIsPinned }: Po
       }}
     >
       <Tooltip title={isPinned ? "Bỏ ghim" : "Ghim bài viết"}>
-        <IconButton 
-          size="small" 
+        <IconButton
+          aria-label={isPinned ? 'Bỏ ghim bài viết' : 'Ghim bài viết'}
+          size="small"
           onClick={handlePin}
-          sx={{ 
+          sx={{
             color: isPinned ? 'primary.main' : 'text.secondary',
             '& svg': {
               transform: isPinned ? 'rotate(90deg)' : 'none',
@@ -100,22 +101,24 @@ export default function PostDetailAdminActions({ id, slug, initialIsPinned }: Po
           <PushPinIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      
+
       <Tooltip title="Chỉnh sửa">
-        <IconButton 
-          size="small" 
-          component={Link} 
+        <IconButton
+          aria-label="Chỉnh sửa bài viết"
+          size="small"
+          component={Link}
           href={`/admin/posts/edit/${id}`}
           sx={{ color: 'text.secondary' }}
         >
           <EditIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      
+
       <Tooltip title="Xóa">
-        <IconButton 
-          size="small" 
-          color="error" 
+        <IconButton
+          aria-label="Xóa bài viết"
+          size="small"
+          color="error"
           onClick={handleDelete}
         >
           <DeleteIcon fontSize="small" />

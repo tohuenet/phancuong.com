@@ -1,30 +1,38 @@
 import fs from 'fs/promises';
 import path from 'path';
+import DOMPurify from 'isomorphic-dompurify';
 
-/**
- * A safe, whitelist-based HTML sanitizer.
- * Allows common rich text tags and attributes while removing scripts and events.
- */
+// Whitelist-based sanitizer backed by DOMPurify. Scoped to the rich-text
+// tags Tiptap emits plus our comment-attachment grid. DOMPurify strips
+// scripts, event handlers, and javascript: URIs by default.
+const ALLOWED_TAGS = [
+  'p', 'br', 'strong', 'em', 'u', 's', 'sub', 'sup', 'code', 'pre',
+  'blockquote', 'ul', 'ol', 'li',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'a', 'img', 'hr',
+  'table', 'thead', 'tbody', 'tr', 'td', 'th',
+  'span', 'div', 'figure', 'figcaption',
+  'mark', 'kbd',
+  'iframe', // scoped below via ALLOWED_URI_REGEXP
+];
+
+const ALLOWED_ATTR = [
+  'href', 'src', 'alt', 'title', 'class', 'id', 'target', 'rel',
+  'width', 'height', 'loading', 'allowfullscreen', 'frameborder',
+  'colspan', 'rowspan', 'data-language', 'data-theme', 'data-highlighted-line',
+  'data-line', 'data-rehype-pretty-code-figure',
+];
+
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
-
-  // 1. Remove script tags and their content
-  let sanitized = html.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, '');
-
-  // 2. Remove all "on..." event handlers (e.g., onclick, onerror)
-  sanitized = sanitized.replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '');
-  sanitized = sanitized.replace(/\son\w+\s*=\s*[^\s>]+/gi, '');
-
-  // 3. Remove "javascript:" URIs
-  sanitized = sanitized.replace(/href\s*=\s*["']\s*javascript:[^"']*["']/gi, 'href="#"');
-
-  /**
-   * NOTE: In a production environment with complex requirements, 
-   * using a library like `sanitize-html` is highly recommended.
-   * This custom implementation is a strict whitelist-focused fallback.
-   */
-
-  return sanitized;
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR,
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+    ADD_ATTR: ['target'],
+    FORBID_ATTR: ['style'],
+    USE_PROFILES: { html: true },
+  });
 }
 
 /**

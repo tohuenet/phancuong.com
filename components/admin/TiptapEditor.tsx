@@ -81,7 +81,11 @@ export default function TiptapEditor({ value, onChange, placeholder, id = 'new-p
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({
-        codeBlock: false, 
+        codeBlock: false,
+        // Disable built-in link/underline so our customized versions below
+        // (with class + openOnClick) register without collision.
+        link: false,
+        underline: false,
       }),
       TiptapLink.configure({
         openOnClick: false,

@@ -12,6 +12,7 @@ import PostArticleContent from '@/components/blog/PostArticleContent';
 import ArticleBodySkeleton from '@/components/blog/ArticleBodySkeleton';
 import PostDetailShell from '@/components/blog/PostDetailShell';
 import CommentSection from '@/components/blog/CommentSection';
+import { getVisibleCommentsForPost } from '@/lib/comments';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
 import PostHeader from '@/components/blog/PostHeader';
 import ReadingProgressBar from '@/components/common/ReadingProgressBar';
@@ -115,7 +116,12 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           </Suspense>
         </Box>
 
-        <CommentSection postSlug={slug} />
+        {/* Fallback is null (not a full CommentSection) so the fallback
+            copy doesn't mount-and-fetch before the server-rendered copy
+            replaces it. */}
+        <Suspense fallback={null}>
+          <CommentSectionLoader slug={slug} />
+        </Suspense>
 
         <Box 
           sx={{ 
@@ -229,6 +235,19 @@ async function ArticleBodyLoader({ slug }: { slug: string }) {
 }
 
 import PostDetailAdminActions from '@/components/blog/PostDetailAdminActions';
+
+// SSR comments so the initial list renders on first paint and the client
+// skips the fetch-on-mount waterfall. Privacy masking mirrors the API route.
+async function CommentSectionLoader({ slug }: { slug: string }) {
+  const session = await auth();
+  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
+  const initialComments = await getVisibleCommentsForPost(
+    slug,
+    session?.user?.email,
+    isAdmin,
+  );
+  return <CommentSection postSlug={slug} initialComments={initialComments as any} />;
+}
 
 // Independent Edit Button Loader
 async function EditButtonLoader({ slug }: { slug: string }) {

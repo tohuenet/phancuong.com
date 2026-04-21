@@ -66,14 +66,17 @@ export default function AppShell({ children }: AppShellProps) {
 
   if (isAdminPath) {
     return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
           minHeight: '100vh',
           bgcolor: 'background.default',
         }}
       >
+        <a className="skip-link" href="#main-content">
+          Bỏ qua đến nội dung chính
+        </a>
         {children}
 
         {/* Global Floating Glass Toggle for Admin */}
@@ -99,6 +102,7 @@ export default function AppShell({ children }: AppShellProps) {
                     exit={{ opacity: 0, scale: 0.8 }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
                   >
                     <Tooltip title="Bài viết mới" placement="left">
                       <IconButton
@@ -108,7 +112,8 @@ export default function AppShell({ children }: AppShellProps) {
                         sx={{
                           padding: '10px',
                           bgcolor: alpha(theme.palette.background.default, 0.4),
-                          backdropFilter: 'blur(12px) saturate(180%)',
+                          backdropFilter: 'blur(20px) saturate(180%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                           border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                           boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                           color: 'primary.main',
@@ -131,6 +136,7 @@ export default function AppShell({ children }: AppShellProps) {
                   exit={{ opacity: 0, scale: 0.8 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
                 >
                   <Tooltip title="Đăng xuất" placement="left">
                     <IconButton
@@ -139,7 +145,8 @@ export default function AppShell({ children }: AppShellProps) {
                       sx={{
                         padding: '10px',
                         bgcolor: alpha(theme.palette.background.default, 0.4),
-                        backdropFilter: 'blur(12px) saturate(180%)',
+                        backdropFilter: 'blur(20px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                         border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                         color: 'text.secondary',
@@ -160,21 +167,26 @@ export default function AppShell({ children }: AppShellProps) {
             )}
           </AnimatePresence>
 
-          {/* Layout Toggle - Mirroring Homepage */}
-          <Tooltip title={isWide ? 'Chế độ tập trung' : 'Chế độ mở rộng'} placement="left">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+          {/* Layout Toggle - Mirroring Homepage. motion.div must be OUTSIDE
+              Tooltip so Tooltip's direct child is the IconButton (natively
+              focusable); otherwise Tooltip adds tabindex+aria-label to the
+              motion.div wrapper, duplicating ARIA labels. */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
+          >
+            <Tooltip title={isWide ? 'Chế độ tập trung' : 'Chế độ mở rộng'} placement="left">
               <IconButton
                 aria-label={isWide ? 'Chuyển sang chế độ tập trung' : 'Chuyển sang chế độ mở rộng'}
                 onClick={toggleWideMode}
                 sx={{
                   padding: '10px',
                   bgcolor: alpha(theme.palette.background.default, 0.4),
-                  backdropFilter: 'blur(12px) saturate(180%)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                   border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                   boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                   color: 'text.secondary',
@@ -209,24 +221,26 @@ export default function AppShell({ children }: AppShellProps) {
                   </motion.div>
                 </AnimatePresence>
               </IconButton>
-            </motion.div>
-          </Tooltip>
+            </Tooltip>
+          </motion.div>
 
           {/* Theme Toggle - Mirroring Homepage */}
-          <Tooltip title={theme.palette.mode === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'} placement="left">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
+          >
+            <Tooltip title={theme.palette.mode === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'} placement="left">
               <IconButton
                 aria-label={theme.palette.mode === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
                 onClick={(e) => toggleColorMode(e)}
                 sx={{
                   padding: '10px',
                   bgcolor: alpha(theme.palette.background.default, 0.4),
-                  backdropFilter: 'blur(12px) saturate(180%)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                   border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                   boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                   color: 'primary.main',
@@ -255,18 +269,18 @@ export default function AppShell({ children }: AppShellProps) {
                   </motion.div>
                 </AnimatePresence>
               </IconButton>
-            </motion.div>
-          </Tooltip>
+            </Tooltip>
+          </motion.div>
         </Box>
       </Box>
     );
   }
 
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
         minHeight: '100vh',
         bgcolor: 'background.default',
         color: 'text.primary',
@@ -274,6 +288,9 @@ export default function AppShell({ children }: AppShellProps) {
         overflowX: 'hidden',
       }}
     >
+      <a className="skip-link" href="#main-content">
+        Bỏ qua đến nội dung chính
+      </a>
       <LiquidBackground />
 
       <Box 
@@ -558,6 +575,7 @@ export default function AppShell({ children }: AppShellProps) {
               exit={{ opacity: 0, scale: 0.8 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
             >
               <Tooltip title="Đăng nhập" placement="left">
                 <IconButton
@@ -566,7 +584,8 @@ export default function AppShell({ children }: AppShellProps) {
                   sx={{
                     padding: '10px',
                     bgcolor: alpha(theme.palette.background.default, 0.4),
-                    backdropFilter: 'blur(12px) saturate(180%)',
+                    backdropFilter: 'blur(20px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                     border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                     boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                     color: 'primary.main',
@@ -593,6 +612,7 @@ export default function AppShell({ children }: AppShellProps) {
                   exit={{ opacity: 0, scale: 0.8 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
                 >
                   <Tooltip title="Bài viết mới" placement="left">
                     <IconButton
@@ -602,7 +622,8 @@ export default function AppShell({ children }: AppShellProps) {
                       sx={{
                         padding: '10px',
                         bgcolor: alpha(theme.palette.background.default, 0.4),
-                        backdropFilter: 'blur(12px) saturate(180%)',
+                        backdropFilter: 'blur(20px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                         border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                         boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                         color: 'primary.main',
@@ -625,6 +646,7 @@ export default function AppShell({ children }: AppShellProps) {
                 exit={{ opacity: 0, scale: 0.8 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
               >
                 <Tooltip title="Đăng xuất" placement="left">
                   <IconButton
@@ -633,7 +655,8 @@ export default function AppShell({ children }: AppShellProps) {
                     sx={{
                       padding: '10px',
                       bgcolor: alpha(theme.palette.background.default, 0.4),
-                      backdropFilter: 'blur(12px) saturate(180%)',
+                      backdropFilter: 'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                       border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                       boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                       color: 'text.secondary',
@@ -654,14 +677,16 @@ export default function AppShell({ children }: AppShellProps) {
           )}
         </AnimatePresence>
 
-        {/* Layout Toggle — hidden on mobile */}
-        <Tooltip title={isWide ? 'Chế độ tập trung' : 'Chế độ mở rộng'} placement="left">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+        {/* Layout Toggle — hidden on mobile. motion.div outside Tooltip so
+            Tooltip targets the natively-focusable IconButton directly. */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
+        >
+          <Tooltip title={isWide ? 'Chế độ tập trung' : 'Chế độ mở rộng'} placement="left">
             <IconButton
               aria-label={isWide ? 'Chuyển sang chế độ tập trung' : 'Chuyển sang chế độ mở rộng'}
               onClick={toggleWideMode}
@@ -669,7 +694,8 @@ export default function AppShell({ children }: AppShellProps) {
                 display: { xs: 'none', md: 'inline-flex' },
                 padding: '10px',
                 bgcolor: alpha(theme.palette.background.default, 0.4),
-                backdropFilter: 'blur(12px) saturate(180%)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                 boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                 color: 'text.secondary',
@@ -704,24 +730,26 @@ export default function AppShell({ children }: AppShellProps) {
                 </motion.div>
               </AnimatePresence>
             </IconButton>
-          </motion.div>
-        </Tooltip>
+          </Tooltip>
+        </motion.div>
 
         {/* Theme Toggle */}
-        <Tooltip title={theme.palette.mode === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'} placement="left">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+              tabIndex={-1}
+        >
+          <Tooltip title={theme.palette.mode === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'} placement="left">
             <IconButton
               aria-label={theme.palette.mode === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
               onClick={(e) => toggleColorMode(e)}
               sx={{
                 padding: '10px',
                 bgcolor: alpha(theme.palette.background.default, 0.4),
-                backdropFilter: 'blur(12px) saturate(180%)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                 boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
                 color: 'primary.main',
@@ -750,8 +778,8 @@ export default function AppShell({ children }: AppShellProps) {
                 </motion.div>
               </AnimatePresence>
             </IconButton>
-          </motion.div>
-        </Tooltip>
+          </Tooltip>
+        </motion.div>
       </Box>
     </Box>
   );
