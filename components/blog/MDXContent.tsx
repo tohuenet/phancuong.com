@@ -174,10 +174,13 @@ const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>)
 };
 
 const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
+  // Demote all article headings by one level so they don't compete with the
+  // PostHeader <h1>. Author writes `#` → renders as <h2>, `##` → <h3>, etc.
+  // This keeps h1 → h2 → h3 sequential for Lighthouse + screen readers.
   h1: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
     <Typography
       variant="h3"
-      component="h1"
+      component="h2"
       sx={{
         mt: 6, mb: 3,
         fontWeight: 700,
@@ -192,7 +195,7 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
   h2: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
     <Typography
       variant="h4"
-      component="h2"
+      component="h3"
       sx={{
         mt: 5, mb: 2,
         fontWeight: 700,
@@ -207,9 +210,51 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
   h3: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
     <Typography
       variant="h5"
-      component="h3"
+      component="h4"
       sx={{
         mt: 4, mb: 2,
+        fontWeight: 700,
+        fontFamily: tokens.typography.fontFamily.serif,
+        lineHeight: 1.4,
+        color: 'text.primary'
+      }}
+      {...props}
+    />
+  ),
+  h4: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <Typography
+      variant="h6"
+      component="h5"
+      sx={{
+        mt: 3, mb: 1.5,
+        fontWeight: 700,
+        fontFamily: tokens.typography.fontFamily.serif,
+        lineHeight: 1.4,
+        color: 'text.primary'
+      }}
+      {...props}
+    />
+  ),
+  h5: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <Typography
+      variant="h6"
+      component="h6"
+      sx={{
+        mt: 3, mb: 1.5,
+        fontWeight: 600,
+        fontFamily: tokens.typography.fontFamily.serif,
+        lineHeight: 1.4,
+        color: 'text.primary'
+      }}
+      {...props}
+    />
+  ),
+  h6: (props: React.HTMLAttributes<HTMLHeadingElement>) => (
+    <Typography
+      variant="body1"
+      component="h6"
+      sx={{
+        mt: 3, mb: 1.5,
         fontWeight: 700,
         fontFamily: tokens.typography.fontFamily.serif,
         lineHeight: 1.4,

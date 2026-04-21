@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
   // the client bundle. Each entry cuts tens-to-hundreds of KB on mobile.
   experimental: {
     viewTransition: true,
+    // Inline small CSS chunks into the HTML `<head>` so there's no render-
+    // blocking <link rel="stylesheet"> waterfall on first paint. Our CSS
+    // stays tiny (~1KB) because MUI uses runtime CSS-in-JS — the bulk of
+    // styling never shows up as a stylesheet. Prod-only, per Next docs.
+    inlineCss: true,
     optimizePackageImports: [
       '@mui/material',
       '@mui/icons-material',
