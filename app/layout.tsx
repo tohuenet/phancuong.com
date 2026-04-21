@@ -4,7 +4,7 @@ import AuthProvider from '@/components/Providers/AuthProvider';
 import ThemeContextProvider from '@/components/ThemeRegistry/ThemeContextProvider';
 import AppShell from '@/components/layout/AppShell';
 import FeedbackProvider from '@/components/Providers/FeedbackProvider';
-import DeferredToaster from '@/components/Providers/DeferredToaster';
+import { Toaster } from 'sonner';
 import Box from '@mui/material/Box';
 import { auth } from '@/auth';
 
@@ -84,7 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <AppShell>
                   {children}
                 </AppShell>
-                <DeferredToaster />
+                <Toaster position="top-right" expand={false} />
               </FeedbackProvider>
             </ThemeContextProvider>
           </AppRouterCacheProvider>

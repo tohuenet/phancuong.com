@@ -38,6 +38,19 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Page routes: override Next's default `Cache-Control: no-store` (set
+        // for dynamic responses) with `private, no-cache` so Chrome's bfcache
+        // can keep the page alive on back/forward nav. `no-cache` still forces
+        // revalidation on a fresh visit; `private` keeps it out of CDN caches.
+        // Excludes API routes, `_next/`, and static asset extensions so those
+        // keep their own cache semantics (auth endpoints stay `no-store`,
+        // static chunks stay `immutable`).
+        source: '/((?!api/|_next/|.*\\.(?:ico|png|jpg|jpeg|gif|webp|avif|svg|css|js|woff2?|ttf|otf|mp4|webm)$).*)',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-cache, must-revalidate' },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: [
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
@@ -56,17 +69,23 @@ const nextConfig: NextConfig = {
           // CSP is additive: `connect-src` allows http: + ws: in dev so HMR
           // and chunk fetches over localhost work. `upgrade-insecure-requests`
           // is prod-only so the dev server (HTTP) isn't forced to HTTPS.
+          // Cloudflare Web Analytics (auto-injected when proxying through CF):
+          // script at static.cloudflareinsights.com, RUM telemetry posts to
+          // cloudflareinsights.com. `script-src-elem` is the modern per-tag
+          // variant and fallbacks to `script-src`, but some browsers split
+          // enforcement — set both so the Chrome warning goes away too.
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' static.cloudflareinsights.com",
+              "script-src-elem 'self' 'unsafe-inline' static.cloudflareinsights.com",
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
               "font-src 'self' fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",
               "media-src 'self'",
               isProd
-                ? "connect-src 'self' https: wss:"
+                ? "connect-src 'self' https: wss: cloudflareinsights.com"
                 : "connect-src 'self' http: https: ws: wss:",
               "frame-src 'self' www.youtube.com www.youtube-nocookie.com",
               "frame-ancestors 'self'",
