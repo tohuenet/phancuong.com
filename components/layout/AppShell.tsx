@@ -322,10 +322,13 @@ export default function AppShell({ children }: AppShellProps) {
               }
             }}
           >
-            <Typography 
+            <Typography
               component="span"
-              sx={{ 
-                fontWeight: 300, 
+              sx={{
+                // Dropped weight 300 from the font payload to shave a woff2
+                // off the critical path. Use 400 here for the logo's "PHAN"
+                // — visually near-identical with less loaded.
+                fontWeight: 400,
                 letterSpacing: '0.02em',
                 fontSize: '1.25rem',
                 color: 'text.secondary',

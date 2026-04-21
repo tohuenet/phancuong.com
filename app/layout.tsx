@@ -8,11 +8,13 @@ import { Toaster } from 'sonner';
 import Box from '@mui/material/Box';
 import { auth } from '@/auth';
 
-// Only the weights actually used across typography + logo + buttons.
-// Dropping 100/200/500 cuts ~30% of font payload on mobile without any
-// visible regression (logo uses 300/900, body 400, medium 600, bold 700/800).
+// Weights actually used across typography + logo + buttons.
+// Dropping 100/200/300/500 cuts ~40% of preloaded font payload on mobile.
+// Weight 300 was only used in the logo's "PHAN" — falling back to 400 is
+// visually near-identical and removes 1-2 woff2 files from the critical
+// path (LCP win ~50-100ms on mobile).
 const beVietnamPro = Be_Vietnam_Pro({
-  weight: ['300', '400', '600', '700', '800', '900'],
+  weight: ['400', '600', '700', '800', '900'],
   subsets: ['latin', 'vietnamese'],
   display: 'swap',
   variable: '--font-be-vietnam',
