@@ -6,7 +6,6 @@ import {
   Pagination,
   alpha,
   useTheme,
-  Button
 } from '@mui/material';
 import { useFeedback } from '@/components/Providers/FeedbackProvider';
 import PostListItem from '@/components/blog/PostListItem';
@@ -14,7 +13,6 @@ import BlogSearchFilter from '@/components/blog/BlogSearchFilter';
 import { tokens } from '@/lib/theme-tokens';
 import { m, AnimatePresence, Reorder } from 'framer-motion';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LayoutModeContext } from '../ThemeRegistry/ThemeContextProvider';
 import { useState, useMemo, useContext } from 'react';

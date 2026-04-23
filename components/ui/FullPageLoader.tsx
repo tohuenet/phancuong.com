@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { m, AnimatePresence } from 'framer-motion';
 import { Box, Typography, alpha, useTheme } from '@mui/material';
 
@@ -105,12 +106,14 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
                   ease: "easeInOut"
                 }}
               >
-                <img 
-                  src="/logo.png" 
-                  alt="Logo" 
+                <Image
+                  src="/logo.png"
+                  alt="Logo"
+                  width={60}
+                  height={60}
+                  priority
                   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   onError={(e) => {
-                    // Fallback to a simple circle if logo fails
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />

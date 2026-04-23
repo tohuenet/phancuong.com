@@ -10,13 +10,13 @@
     "analyze": "ANALYZE=true next build --webpack"
   },
   "dependencies": {
-    "@emotion/react": "latest",
-    "@emotion/styled": "latest",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@floating-ui/dom": "^1.7.6",
-    "@hookform/resolvers": "latest",
-    "@mui/icons-material": "latest",
-    "@mui/material": "latest",
-    "@mui/material-nextjs": "latest",
+    "@hookform/resolvers": "^5.2.2",
+    "@mui/icons-material": "9.0.0",
+    "@mui/material": "9.0.0",
+    "@mui/material-nextjs": "9.0.0",
     "@tiptap/core": "^3.22.4",
     "@tiptap/extension-bubble-menu": "^3.22.4",
     "@tiptap/extension-character-count": "^3.22.4",
@@ -46,7 +46,7 @@
     "@tiptap/react": "^3.22.4",
     "@tiptap/starter-kit": "^3.22.4",
     "date-fns": "^4.1.0",
-    "framer-motion": "latest",
+    "framer-motion": "^12.38.0",
     "highlight.js": "^11.11.1",
     "isomorphic-dompurify": "^3.9.0",
     "lowlight": "^3.3.0",
@@ -61,7 +61,7 @@
     "reading-time": "^1.5.0",
     "rehype-pretty-code": "^0.14.3",
     "shiki": "^4.0.2",
-    "sonner": "latest",
+    "sonner": "^2.0.7",
     "uuid": "^11.1.0",
     "zod": "^4.3.6"
   },
@@ -82,11 +82,11 @@
   },
   "browserslist": {
     "production": [
-      "chrome >= 108",
-      "edge >= 108",
-      "firefox >= 110",
-      "safari >= 16",
-      "ios_saf >= 16"
+      "chrome >= 117",
+      "edge >= 121",
+      "firefox >= 121",
+      "safari >= 17",
+      "ios_saf >= 17"
     ],
     "development": [
       "last 1 chrome version",

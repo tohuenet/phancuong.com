@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { CommentsDB } from '@/lib/storage';
+import { CommentsDB, type BlogComment } from '@/lib/storage';
 
 import { sanitizeHtml, cleanupImages, diffRemovedImages } from '@/lib/html';
 
-function collectDescendants(rootId: string, all: any[]): any[] {
-  const byParent = new Map<string, any[]>();
+function collectDescendants(rootId: string, all: BlogComment[]): BlogComment[] {
+  const byParent = new Map<string, BlogComment[]>();
   for (const c of all) {
     const p = c.parentId ?? null;
     if (!p) continue;
     if (!byParent.has(p)) byParent.set(p, []);
     byParent.get(p)!.push(c);
   }
-  const out: any[] = [];
+  const out: BlogComment[] = [];
   const stack = [rootId];
   while (stack.length) {
     const next = stack.pop()!;
@@ -44,7 +44,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const isAdmin = (session.user as any)?.isAdmin;
+    const isAdmin = session.user?.isAdmin;
     const isOwner = session.user?.email === comment.authorEmail;
 
     if (!isAdmin && !isOwner) {
@@ -77,7 +77,7 @@ export async function PATCH(
     await diffRemovedImages(comment.content || '', cleanContent);
 
     return NextResponse.json(updatedComment);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
   }
 }
@@ -99,7 +99,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     }
 
-    const isAdmin = (session.user as any)?.isAdmin;
+    const isAdmin = session.user?.isAdmin;
     const isOwner = session.user?.email === comment.authorEmail;
 
     if (!isAdmin && !isOwner) {
@@ -123,7 +123,7 @@ export async function DELETE(
       deletedIds: toDelete.map(c => c.id),
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
   }
 }

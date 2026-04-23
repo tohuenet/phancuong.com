@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Container, Typography, useTheme, alpha, IconButton, Tooltip, Stack } from '@mui/material';
+import { Box, Container, Typography, useTheme, alpha, IconButton, Tooltip } from '@mui/material';
 import LiquidBackground from '../common/LiquidBackground';
 import { tokens } from '@/lib/theme-tokens';
 import { LayoutModeContext, ColorModeContext } from '../ThemeRegistry/ThemeContextProvider';
@@ -9,9 +9,6 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useSession, signOut, signIn } from 'next-auth/react';
 import { LogIn, Sun, Moon } from 'lucide-react';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import TwitterIcon from '@mui/icons-material/Twitter';
-import EmailIcon from '@mui/icons-material/Email';
 import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded';
 import CloseFullscreenRoundedIcon from '@mui/icons-material/CloseFullscreenRounded';
 import AddIcon from '@mui/icons-material/Add';
@@ -95,7 +92,7 @@ export default function AppShell({ children }: AppShellProps) {
           <AnimatePresence>
             {session?.user && (
               <>
-                {(session.user as any).isAdmin && (
+                {session.user.isAdmin && (
                   <m.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -608,7 +605,7 @@ export default function AppShell({ children }: AppShellProps) {
 
           {session?.user && (
             <>
-              {(session.user as any).isAdmin && (
+              {session.user.isAdmin && (
                 <m.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}

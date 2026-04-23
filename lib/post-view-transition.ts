@@ -6,14 +6,15 @@ export interface PostViewTransitionNames {
   readingTime: string;
 }
 
-export function getPostViewTransitionNames(slug: string): PostViewTransitionNames {
+export function getPostViewTransitionNames(slug: string, isPinned = false): PostViewTransitionNames {
   const key = slug.trim().toLowerCase();
+  const variant = isPinned ? 'pinned-' : '';
 
   return {
-    header: `post-${key}-header`,
-    title: `post-${key}-title`,
-    tag: `post-${key}-tag`,
-    publishedAt: `post-${key}-published-at`,
-    readingTime: `post-${key}-reading-time`,
+    header: `post-${variant}${key}-header`,
+    title: `post-${variant}${key}-title`,
+    tag: `post-${variant}${key}-tag`,
+    publishedAt: `post-${variant}${key}-published-at`,
+    readingTime: `post-${variant}${key}-reading-time`,
   };
 }

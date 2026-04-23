@@ -11,7 +11,7 @@ import {
   Alert,
   Grid
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import SaveIcon from '@mui/icons-material/Save';
@@ -19,8 +19,15 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Link from 'next/link';
 import { slugify } from '@/lib/slug';
 
+interface CourseFormValues {
+  title: string;
+  slug: string;
+  description: string;
+  thumbnailUrl: string;
+}
+
 interface CourseFormProps {
-  initialData?: any;
+  initialData?: Partial<CourseFormValues> & { id?: string };
   isEditing?: boolean;
 }
 
@@ -29,8 +36,8 @@ export default function CourseForm({ initialData, isEditing = false }: CourseFor
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, setValue, watch } = useForm({
-    defaultValues: initialData || {
+  const { register, handleSubmit, setValue, control } = useForm<CourseFormValues>({
+    defaultValues: (initialData as CourseFormValues) || {
       title: '',
       slug: '',
       description: '',
@@ -39,7 +46,7 @@ export default function CourseForm({ initialData, isEditing = false }: CourseFor
   });
 
   const [slugStatus, setSlugStatus] = useState<'auto' | 'manual'>('auto');
-  const title = watch('title');
+  const title = useWatch({ control, name: 'title' });
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -49,10 +56,10 @@ export default function CourseForm({ initialData, isEditing = false }: CourseFor
     }
   }, [title, setValue, isEditing, slugStatus]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: CourseFormValues) => {
     setSaving(true);
     setError(null);
-    const url = isEditing ? `/api/admin/courses/${initialData.id}` : '/api/admin/courses';
+    const url = isEditing && initialData?.id ? `/api/admin/courses/${initialData.id}` : '/api/admin/courses';
     const method = isEditing ? 'PATCH' : 'POST';
 
     try {
@@ -69,7 +76,7 @@ export default function CourseForm({ initialData, isEditing = false }: CourseFor
         const result = await res.json();
         setError(result.error || 'Something went wrong');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to save course.');
     } finally {
       setSaving(false);

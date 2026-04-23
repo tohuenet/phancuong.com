@@ -5,7 +5,6 @@ import ThemeContextProvider from '@/components/ThemeRegistry/ThemeContextProvide
 import AppShell from '@/components/layout/AppShell';
 import FeedbackProvider from '@/components/Providers/FeedbackProvider';
 import { Toaster } from 'sonner';
-import Box from '@mui/material/Box';
 import { auth } from '@/auth';
 
 // Weights actually used across typography + logo + buttons.

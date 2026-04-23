@@ -48,8 +48,7 @@ interface PostCardProps {
 export default function PostCard({ post, featured, isAdmin, onDelete, onPin }: PostCardProps) {
   const theme = useTheme();
   const router = useRouter();
-  const transitionNames = getPostViewTransitionNames(post.slug);
-  const primaryTag = post.tags[0];
+  const transitionNames = getPostViewTransitionNames(post.slug, post.isPinned);
 
   return (
     <Box

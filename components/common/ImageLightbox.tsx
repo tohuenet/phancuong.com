@@ -188,6 +188,9 @@ export default function ImageLightbox({ images, currentIndex, open, onClose, onN
                 justifyContent: 'center',
               }}
             >
+              {/* Lightbox displays user-content images at full resolution; next/image's
+                  optimizer would re-encode and lose fidelity, so we use a plain <img>. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={images[currentIndex]}
                 alt={`Image ${currentIndex + 1}`}

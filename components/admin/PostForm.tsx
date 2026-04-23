@@ -1,17 +1,16 @@
 'use client';
 
-import { 
-  Box, 
-  TextField, 
-  Button, 
-  Stack, 
-  Typography,
+import {
+  Box,
+  TextField,
+  Button,
+  Stack,
   CircularProgress,
   Alert,
   alpha,
   useTheme
 } from '@mui/material';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
@@ -52,7 +51,7 @@ interface PostFormProps {
 export default function PostForm({ initialData, isEditing = false }: PostFormProps) {
   const router = useRouter();
   const theme = useTheme();
-  const { data: session } = useSession();
+  useSession();
   const { isWide } = useContext(LayoutModeContext);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +72,7 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
     tagsString: '',
   };
 
-  const { register, handleSubmit, control, setValue, getValues, watch } = useForm<PostData>({
+  const { register, handleSubmit, control, setValue } = useForm<PostData>({
     defaultValues
   });
 
@@ -84,7 +83,9 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
   useEffect(() => {
     const draft = localStorage.getItem(`tiptap_autosave_${isEditing ? initialData?.id : 'new-post'}`);
     if (draft && draft !== initialData?.content) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration of stale draft from localStorage
       setLocalDraft(draft);
+       
       setShowRestorePrompt(true);
     }
   }, [isEditing, initialData]);
@@ -150,7 +151,7 @@ export default function PostForm({ initialData, isEditing = false }: PostFormPro
     }
   };
 
-  const isPublished = watch('published');
+  const isPublished = useWatch({ control, name: 'published' });
 
   return (
     <Box component="form" sx={{ 

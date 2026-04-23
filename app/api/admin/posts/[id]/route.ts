@@ -106,7 +106,7 @@ export async function DELETE(
       try {
         await fs.unlink(filePath);
         console.log(`Thumbnail released: ${fileName}`);
-      } catch (err) {
+      } catch {
         // Ignore
       }
     }

@@ -1,6 +1,5 @@
-import { PostsDB, SeriesDB } from './storage';
+import { PostsDB, SeriesDB, type BlogTag } from './storage';
 import readingTime from 'reading-time';
-import { revalidateTag } from 'next/cache';
 import { cache } from 'react';
 
 function readingTimeVi(content: string): string {
@@ -66,9 +65,9 @@ export async function getPublishedPosts(params: {
   // Tag filter
   if (tag) {
     if (tag === 'general') {
-      allPosts = allPosts.filter(p => !p.tags || p.tags.length === 0 || p.tags.some((t: any) => t.slug === 'general'));
+      allPosts = allPosts.filter(p => !p.tags || p.tags.length === 0 || p.tags.some(t => t.slug === 'general'));
     } else {
-      allPosts = allPosts.filter(p => p.tags?.some((t: any) => t.slug === tag));
+      allPosts = allPosts.filter(p => p.tags?.some(t => t.slug === tag));
     }
   }
 
@@ -78,7 +77,7 @@ export async function getPublishedPosts(params: {
     allPosts = allPosts.filter(p => 
       p.title.toLowerCase().includes(s) || 
       p.content.toLowerCase().includes(s) ||
-      p.tags?.some((t: any) => t.name.toLowerCase().includes(s))
+      p.tags?.some(t => t.name.toLowerCase().includes(s))
     );
   }
 
@@ -143,7 +142,7 @@ export const getPostMetaBySlug = cache(async (slug: string, isAdmin = false): Pr
   return {
     ...meta,
     readingTime: readingTimeVi(content || ''),
-  } as any;
+  } as Omit<PostWithReadingTime, 'content'>;
 });
 
 export async function getAllTags(): Promise<TagWithCount[]> {
@@ -159,7 +158,7 @@ export async function getAllTags(): Promise<TagWithCount[]> {
       return;
     }
 
-    post.tags?.forEach((tag: any) => {
+    post.tags?.forEach((tag: BlogTag) => {
       if (!tagMap.has(tag.slug)) {
         tagMap.set(tag.slug, {
           id: tag.id,

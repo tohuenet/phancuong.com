@@ -49,12 +49,13 @@ const CodeBlock = ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>)
   const [copied, setCopied] = React.useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
   const [isWrapped, setIsWrapped] = React.useState(isMobile);
+  const [prevIsMobile, setPrevIsMobile] = React.useState(isMobile);
   const preRef = React.useRef<HTMLPreElement>(null);
 
-  // Sync wrap state with mobile on initial load, but allow manual override
-  React.useEffect(() => {
+  if (prevIsMobile !== isMobile) {
+    setPrevIsMobile(isMobile);
     setIsWrapped(isMobile);
-  }, [isMobile]);
+  }
 
   const handleCopy = () => {
     if (preRef.current) {
@@ -309,7 +310,7 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
       {...props}
     />
   ),
-  pre: (props: any) => <CodeBlock {...props} />,
+  pre: (props: React.HTMLAttributes<HTMLPreElement>) => <CodeBlock {...props} />,
   img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
     const { src, onClick, ...imgProps } = props;
     const normalizedSrc = typeof src === 'string' ? src : undefined;

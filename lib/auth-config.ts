@@ -1,6 +1,7 @@
+import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 
-export const authConfig = {
+export const authConfig: NextAuthConfig = {
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -8,17 +9,19 @@ export const authConfig = {
     }),
   ],
   callbacks: {
-    async signIn({ user }: { user: any }) {
+    async signIn() {
       return true;
     },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }) {
       if (session.user) {
         session.user.isAdmin = session.user.email === process.env.ALLOWED_EMAIL;
-        session.user.id = token.sub;
+        if (token.sub) {
+          session.user.id = token.sub;
+        }
       }
       return session;
     },
-    async jwt({ token, user }: { token: any; user?: any }) {
+    async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
       }
@@ -26,12 +29,11 @@ export const authConfig = {
     },
   },
   pages: {
-    error: '/unauthorized', 
+    error: '/unauthorized',
   },
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
   },
   trustHost: true,
   secret: process.env.AUTH_SECRET,
-} as any;
-
+};

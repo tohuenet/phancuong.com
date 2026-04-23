@@ -73,7 +73,7 @@ async function deleteUploadedFiles(fileNames: string[]): Promise<void> {
     try {
       await fs.unlink(resolved);
       console.log(`Resource released: ${fileName}`);
-    } catch (err) {
+    } catch {
       // Ignore if file doesn't exist
     }
   }

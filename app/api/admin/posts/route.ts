@@ -19,7 +19,7 @@ export async function GET() {
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     return NextResponse.json(sortedPosts);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

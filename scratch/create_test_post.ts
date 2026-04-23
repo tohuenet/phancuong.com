@@ -13,6 +13,8 @@ async function createTestPost() {
     thumbnailUrl: '',
     published: true,
     order: 0,
+    isPinned: false,
+    pinnedOrder: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     tags: []

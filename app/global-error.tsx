@@ -48,7 +48,7 @@ export default function GlobalError({
                 A critical error occurred.
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                We're sorry for the inconvenience. A report has been sent to our engineering team.
+                We&apos;re sorry for the inconvenience. A report has been sent to our engineering team.
               </Typography>
               <Button
                 variant="contained"

@@ -12,7 +12,7 @@ import {
   MenuItem,
   Grid
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import SaveIcon from '@mui/icons-material/Save';
@@ -20,8 +20,21 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Link from 'next/link';
 import { slugify } from '@/lib/slug';
 
+interface LessonFormValues {
+  title: string;
+  slug: string;
+  content: string;
+  order: number;
+  courseId: string;
+}
+
+interface CourseOption {
+  id: string;
+  title: string;
+}
+
 interface LessonFormProps {
-  initialData?: any;
+  initialData?: Partial<LessonFormValues> & { id?: string };
   isEditing?: boolean;
 }
 
@@ -29,10 +42,10 @@ export default function LessonForm({ initialData, isEditing = false }: LessonFor
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<CourseOption[]>([]);
 
-  const { register, handleSubmit, setValue, watch } = useForm({
-    defaultValues: initialData || {
+  const { register, handleSubmit, setValue, control } = useForm<LessonFormValues>({
+    defaultValues: (initialData as LessonFormValues) || {
       title: '',
       slug: '',
       content: '',
@@ -42,7 +55,7 @@ export default function LessonForm({ initialData, isEditing = false }: LessonFor
   });
 
   const [slugStatus, setSlugStatus] = useState<'auto' | 'manual'>('auto');
-  const title = watch('title');
+  const title = useWatch({ control, name: 'title' });
 
   // Load courses for selection
   useEffect(() => {
@@ -59,10 +72,10 @@ export default function LessonForm({ initialData, isEditing = false }: LessonFor
     }
   }, [title, setValue, isEditing, slugStatus]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: LessonFormValues) => {
     setSaving(true);
     setError(null);
-    const url = isEditing ? `/api/admin/lessons/${initialData.id}` : '/api/admin/lessons';
+    const url = isEditing && initialData?.id ? `/api/admin/lessons/${initialData.id}` : '/api/admin/lessons';
     const method = isEditing ? 'PATCH' : 'POST';
 
     try {
@@ -79,7 +92,7 @@ export default function LessonForm({ initialData, isEditing = false }: LessonFor
         const result = await res.json();
         setError(result.error || 'Something went wrong');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to save lesson.');
     } finally {
       setSaving(false);

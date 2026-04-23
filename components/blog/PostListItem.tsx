@@ -43,7 +43,7 @@ interface PostListItemProps {
 
 export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandleProps }: PostListItemProps) {
   const theme = useTheme();
-  const transitionNames = getPostViewTransitionNames(post.slug);
+  const transitionNames = getPostViewTransitionNames(post.slug, post.isPinned);
   const primaryTag = post.tags[0] ?? { name: 'general', slug: 'general' };
 
   return (
@@ -110,7 +110,7 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
                 className="title-text"
                 sx={{
                   fontWeight: 800,
-                  fontSize: { xs: '1.35rem', md: '1.85rem' },
+                  fontSize: { xs: '1.2rem', md: '1.5rem' },
                   lineHeight: 1.25,
                   letterSpacing: '-0.02em',
                   color: 'text.primary',

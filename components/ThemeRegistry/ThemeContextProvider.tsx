@@ -68,10 +68,10 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
   const isThemeTransitioningRef = React.useRef(false);
 
   React.useEffect(() => {
-    // Initial initialization
     if (typeof window !== 'undefined') {
       const savedWideMode = localStorage.getItem('phancuong-is-wide-mode');
       if (savedWideMode === 'true') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage; safe on mount only
         setIsWide(true);
       }
     }
@@ -103,7 +103,12 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
           return;
         }
 
-        const doc = document as any;
+        const doc = document as Document & {
+          startViewTransition?: (cb: () => Promise<void> | void) => {
+            ready: Promise<void>;
+            finished: Promise<void>;
+          };
+        };
         if (!doc.startViewTransition) {
           setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
           return;
@@ -111,8 +116,9 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
 
         isThemeTransitioningRef.current = true;
 
-        const x = event && 'clientX' in event ? event.clientX : (event as any)?.x ?? window.innerWidth / 2;
-        const y = event && 'clientY' in event ? event.clientY : (event as any)?.y ?? window.innerHeight / 2;
+        const fallbackOrigin = event && 'x' in event ? event : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        const x = event && 'clientX' in event ? event.clientX : fallbackOrigin.x;
+        const y = event && 'clientY' in event ? event.clientY : fallbackOrigin.y;
         const endRadius = Math.hypot(
           Math.max(x, window.innerWidth - x),
           Math.max(y, window.innerHeight - y)

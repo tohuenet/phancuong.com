@@ -12,7 +12,7 @@ import {
   CircularProgress,
   Divider
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import SaveIcon from '@mui/icons-material/Save';
@@ -23,14 +23,19 @@ export default function AdminProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  const { register, handleSubmit, reset, watch } = useForm({
+  interface ProfileFormValues {
+    name: string;
+    image: string;
+  }
+
+  const { register, handleSubmit, reset, control } = useForm<ProfileFormValues>({
     defaultValues: {
       name: '',
       image: '',
     }
   });
 
-  const watchImage = watch('image');
+  const watchImage = useWatch({ control, name: 'image' });
 
   useEffect(() => {
     if (session?.user) {
@@ -38,11 +43,12 @@ export default function AdminProfilePage() {
         name: session.user.name || '',
         image: session.user.image || '',
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs form once session resolves
       setLoading(false);
     }
   }, [session, reset]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ProfileFormValues) => {
     setSaving(true);
     setMessage(null);
     try {
@@ -59,7 +65,7 @@ export default function AdminProfilePage() {
       } else {
         throw new Error('Failed to update');
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Failed to update profile.' });
     } finally {
       setSaving(false);

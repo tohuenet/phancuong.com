@@ -85,10 +85,11 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
   const [replyUploading, setReplyUploading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe mount flag
     setMounted(true);
   }, []);
 
-  const isAdmin = mounted && (session?.user as { isAdmin?: boolean })?.isAdmin === true;
+  const isAdmin = mounted && session?.user?.isAdmin === true;
 
   const threadedComments = useMemo(() => {
     const mainComments = comments.filter((c) => !c.parentId);
@@ -115,7 +116,7 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
         const data = await res.json();
         setComments(data);
       }
-    } catch (err) {
+    } catch {
       console.error('Failed to fetch comments');
     } finally {
       setLoading(false);
@@ -125,6 +126,7 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
   useEffect(() => {
     // Skip refetch if SSR already provided the initial list.
     if (initialComments) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time fetch on mount; Suspense-migrating is out of scope here
     fetchComments();
   }, [fetchComments, initialComments]);
 
@@ -193,7 +195,7 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
         setError(msg);
         notify(msg, 'error');
       }
-    } catch (err) {
+    } catch {
       const msg = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       setComments((prev) => prev.filter((c) => c.id !== tempId));
       if (rootParentId) setReplyContent(content);
@@ -220,7 +222,7 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
         setEditingId(null);
         notify('Đã cập nhật bình luận.', 'success');
       }
-    } catch (err) {
+    } catch {
       notify('Không thể cập nhật bình luận.', 'error');
     } finally {
       setSubmittingId(null);
@@ -277,14 +279,14 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
         const data = await res.json();
         notify(data.error || 'Không thể xóa bình luận.', 'error');
       }
-    } catch (err) {
+    } catch {
       notify('Đã xảy ra lỗi khi xóa bình luận.', 'error');
     }
   };
 
   const contentSx = (isReply: boolean) => buildCommentContentSx(theme, isReply);
 
-  const renderComment = (comment: any, isReply: boolean = false) => {
+  const renderComment = (comment: Comment & { replies?: Comment[] }, isReply: boolean = false) => {
     const isOwner = session?.user?.email === comment.authorEmail;
     const isEditing = editingId === comment.id;
     const isEdited = comment.editHistory && comment.editHistory.length > 0;
@@ -636,7 +638,7 @@ export default function CommentSection({ postSlug, initialComments }: CommentSec
                 }}
               >
                 <Stack spacing={2.5}>
-                  {comment.replies.map((reply: any) => renderComment(reply, true))}
+                  {comment.replies?.map((reply: Comment) => renderComment(reply, true))}
                 </Stack>
               </Box>
             )}

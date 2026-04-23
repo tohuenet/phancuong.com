@@ -6,12 +6,12 @@ import Link from 'next/link';
 import { ViewTransition } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { tokens } from '@/lib/theme-tokens';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 import { m } from 'framer-motion';
+import type { PostViewTransitionNames } from '@/lib/post-view-transition';
 
 interface PostHeaderProps {
   post: {
@@ -23,7 +23,7 @@ interface PostHeaderProps {
     published?: boolean;
     isPinned?: boolean;
   };
-  transitionNames: any;
+  transitionNames: PostViewTransitionNames;
 }
 
 export default function PostHeader({ post, transitionNames }: PostHeaderProps) {

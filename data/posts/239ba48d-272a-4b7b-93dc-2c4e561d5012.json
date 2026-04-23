@@ -15,5 +15,7 @@
       "name": "observability",
       "slug": "observability"
     }
-  ]
+  ],
+  "isPinned": false,
+  "pinnedOrder": 0
 }

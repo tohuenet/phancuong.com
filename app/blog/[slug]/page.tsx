@@ -1,4 +1,4 @@
-import { Box, Button, alpha } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { getPostBySlug, getPostMetaBySlug } from '@/lib/blog';
 import { PostsDB } from '@/lib/storage';
 import { notFound } from 'next/navigation';
@@ -208,7 +208,7 @@ async function ArticleSchema({ slug }: { slug: string }) {
   return (
     <script
       type="application/ld+json"
-      // eslint-disable-next-line react/no-danger
+       
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
     />
   );
@@ -222,7 +222,7 @@ async function HeaderLoader({ slug }: { slug: string }) {
   const postMeta = await getPostMetaBySlug(slug, isAdmin);
   if (!postMeta) notFound();
 
-  const transitionNames = getPostViewTransitionNames(postMeta.slug);
+  const transitionNames = getPostViewTransitionNames(postMeta.slug, postMeta.isPinned);
   return <PostHeader post={postMeta} transitionNames={transitionNames} />;
 }
 
@@ -253,7 +253,7 @@ async function CommentSectionLoader({ slug }: { slug: string }) {
     session?.user?.email,
     isAdmin,
   );
-  return <CommentSection postSlug={slug} initialComments={initialComments as any} />;
+  return <CommentSection postSlug={slug} initialComments={initialComments} />;
 }
 
 // Independent Edit Button Loader

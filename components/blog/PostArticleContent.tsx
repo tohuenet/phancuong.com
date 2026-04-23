@@ -18,7 +18,7 @@ export default async function PostArticleContent({ content }: PostArticleContent
   // We use a zero-width space after the < to prevent the browser/MDX 
   // from stripping tags that look like Processing Instructions (<?php).
   // We handle both raw <? and HTML-encoded &lt;?
-  let processedContent = content
+  const processedContent = content
     .replace(/<\?/g, '<\u200B?')
     .replace(/&lt;\?/g, '&lt;\u200B?')
     .replace(/<!/g, '<\u200B!')

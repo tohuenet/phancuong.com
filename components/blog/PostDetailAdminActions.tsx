@@ -22,7 +22,7 @@ interface PostDetailAdminActionsProps {
   initialIsPinned: boolean;
 }
 
-export default function PostDetailAdminActions({ id, slug, initialIsPinned }: PostDetailAdminActionsProps) {
+export default function PostDetailAdminActions({ id, initialIsPinned }: PostDetailAdminActionsProps) {
   const theme = useTheme();
   const router = useRouter();
   const { confirm, notify } = useFeedback();

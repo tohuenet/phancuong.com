@@ -11,7 +11,7 @@ import {
   Alert,
   Grid
 } from '@mui/material';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import SaveIcon from '@mui/icons-material/Save';
@@ -38,7 +38,7 @@ export default function SeriesForm({ initialData, isEditing = false }: SeriesFor
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, watch, setValue } = useForm<SeriesData>({
+  const { register, handleSubmit, control, setValue } = useForm<SeriesData>({
     defaultValues: initialData || {
       title: '',
       slug: '',
@@ -48,7 +48,7 @@ export default function SeriesForm({ initialData, isEditing = false }: SeriesFor
   });
 
   const [slugStatus, setSlugStatus] = useState<'auto' | 'manual'>('auto');
-  const title = watch('title');
+  const title = useWatch({ control, name: 'title' });
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function SeriesForm({ initialData, isEditing = false }: SeriesFor
     }
   }, [title, setValue, isEditing, slugStatus]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: SeriesData) => {
     setSaving(true);
     setError(null);
     const url = isEditing && initialData ? `/api/admin/series/${initialData.id}` : '/api/admin/series';
@@ -78,7 +78,7 @@ export default function SeriesForm({ initialData, isEditing = false }: SeriesFor
         const result = await res.json();
         setError(result.error || 'Something went wrong');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to save series.');
     } finally {
       setSaving(false);

@@ -4,7 +4,6 @@ import React from 'react';
 import { Box, alpha } from '@mui/material';
 import { tokens } from '@/lib/theme-tokens';
 import ImageLightbox from '@/components/common/ImageLightbox';
-import ScrollReveal from '@/components/common/ScrollReveal';
 // `highlight.js/lib/common` bundles ~35 common languages (php, js/ts, py, go,
 // rust, bash, sql, html/css, json, yaml, etc.) instead of all 190+ languages.
 import hljs from 'highlight.js/lib/common';
@@ -231,18 +230,37 @@ export default function HTMLContent({ content }: HTMLContentProps) {
         return;
       }
 
-      const result = hljs.highlightAuto(source);
-      const language = result.language;
-      const relevance = result.relevance;
+      // highlight.js's bare `highlightAuto(source)` builds a giant Unicode
+      // character-class regex from every registered language, which V8 rejects
+      // with `SyntaxError: Range out of order in character class` on certain
+      // builds (the bug surfaces when language regexes are merged in a specific
+      // order — see highlight.js issue #4205). Passing an explicit candidate
+      // subset avoids the merged-regex codepath and keeps highlighting working.
+      // Languages here mirror what authors actually paste into posts.
+      const AUTO_DETECT_LANGS = [
+        'bash', 'shell', 'json', 'yaml', 'xml', 'html',
+        'css', 'scss', 'javascript', 'typescript', 'python',
+        'go', 'rust', 'java', 'c', 'cpp', 'csharp', 'php',
+        'ruby', 'sql', 'dockerfile', 'ini',
+      ];
 
-      // Low-confidence auto detection is usually noise — fall back to plain.
-      const highlightedHtml =
-        language && relevance >= 5
-          ? result.value
-          : source
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;');
+      const escape = (text: string) =>
+        text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      let highlightedHtml: string;
+      let language: string | undefined;
+      let relevance = 0;
+
+      try {
+        const result = hljs.highlightAuto(source, AUTO_DETECT_LANGS);
+        language = result.language;
+        relevance = result.relevance;
+
+        // Low-confidence auto detection is usually noise — fall back to plain.
+        highlightedHtml = language && relevance >= 5 ? result.value : escape(source);
+      } catch {
+        highlightedHtml = escape(source);
+      }
 
       block.innerHTML = highlightedHtmlToLines(highlightedHtml);
       block.dataset.highlighted = 'done';

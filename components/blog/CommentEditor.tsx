@@ -62,11 +62,7 @@ export default function CommentEditor({
   const [isMounted, setIsMounted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const initialRef = useRef<{ body: string; attachments: string[] } | null>(null);
-  if (initialRef.current === null) {
-    initialRef.current = splitCommentContent(value);
-  }
-  const initial = initialRef.current;
+  const [initial] = useState(() => splitCommentContent(value));
   const [attachments, setAttachments] = useState<string[]>(initial.attachments);
 
   const uploadRef = useRef<(file: File) => Promise<void>>(null);
@@ -81,6 +77,7 @@ export default function CommentEditor({
   }, [onChange]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe mount flag for SSR-incompatible Tiptap editor
     setIsMounted(true);
   }, []);
 
