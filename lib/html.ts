@@ -13,8 +13,24 @@ const ALLOWED_TAGS = [
   'table', 'thead', 'tbody', 'tr', 'td', 'th',
   'span', 'div', 'figure', 'figcaption',
   'mark', 'kbd',
-  'iframe', // scoped below via ALLOWED_URI_REGEXP
+  'iframe', // src restricted to known embed origins via the hook below
 ];
+
+// Only allow iframes whose src points at a known embed endpoint. Without
+// this, a commenter could embed a phishing page or tracking pixel via a
+// hand-crafted <iframe>. DOMPurify by itself permits the tag once it's in
+// ALLOWED_TAGS — origin filtering has to be enforced manually.
+const IFRAME_SRC_WHITELIST = /^https:\/\/(?:www\.)?(?:youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/|player\.vimeo\.com\/video\/)/i;
+
+// `addHook` registers globally on the shared DOMPurify instance — fine here
+// because no other module uses isomorphic-dompurify in this codebase.
+DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+  if (data.tagName !== 'iframe') return;
+  const src = (node as Element).getAttribute?.('src') || '';
+  if (!IFRAME_SRC_WHITELIST.test(src)) {
+    node.parentNode?.removeChild(node);
+  }
+});
 
 const ALLOWED_ATTR = [
   'href', 'src', 'alt', 'title', 'class', 'id', 'target', 'rel',
@@ -31,7 +47,10 @@ export function sanitizeHtml(html: string): string {
     ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
     ADD_ATTR: ['target'],
     FORBID_ATTR: ['style'],
-    USE_PROFILES: { html: true },
+    // NB: omit USE_PROFILES — when set alongside ALLOWED_TAGS it intersects
+    // with the profile's tag list, which silently drops `iframe` (the html
+    // profile doesn't include it). ALLOWED_TAGS is already an explicit
+    // whitelist, so the profile adds no value here.
   });
 }
 

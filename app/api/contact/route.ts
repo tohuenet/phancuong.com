@@ -2,6 +2,18 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { z } from 'zod';
 
+// Plain-text → HTML escape for fields embedded in the email body. Without
+// this, a submitter could inject `<script>` (most email clients ignore it
+// but logging pipelines may render it) or `<img onerror=>` tracking pixels.
+function escapeHtml(s: string): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Input validation schema
 const contactSchema = z.object({
   name: z.string().min(2, 'Name is too short').max(100),
@@ -45,19 +57,26 @@ export async function POST(request: Request) {
       },
     });
 
+    // Strip CR/LF from `name` before it goes into the From header — prevents
+    // RFC 5322 header injection (e.g. extra `Bcc:` smuggled via newline).
+    const safeName = name.replace(/[\r\n]+/g, ' ').slice(0, 100);
+    const htmlName = escapeHtml(safeName);
+    const htmlEmail = escapeHtml(email);
+    const htmlMessage = escapeHtml(message);
+
     // 4. Send Email
     const mailOptions = {
-      from: `"${name}" <${SMTP_FROM}>`, // Often SMTP providers require from to be the authenticated user
+      from: `"${safeName}" <${SMTP_FROM}>`, // Often SMTP providers require from to be the authenticated user
       to: SMTP_FROM, // Sending to yourself by default
       replyTo: email, // Set person who filled the form as reply-to
-      subject: `New Contact Form Submission from ${name}`,
+      subject: `New Contact Form Submission from ${safeName}`,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; borderRadius: 10px;">
           <h2 style="color: #333; border-bottom: 2px solid #6366f1; padding-bottom: 10px;">New Message</h2>
-          <p><strong>From:</strong> ${name} (&lt;${email}&gt;)</p>
+          <p><strong>From:</strong> ${htmlName} (&lt;${htmlEmail}&gt;)</p>
           <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-top: 20px;">
-            <p style="white-space: pre-wrap; color: #374151;">${message}</p>
+            <p style="white-space: pre-wrap; color: #374151;">${htmlMessage}</p>
           </div>
           <hr style="margin-top: 30px; border: 0; border-top: 1px solid #eee;" />
           <p style="font-size: 12px; color: #9ca3af;">This email was sent via your website contact form.</p>

@@ -282,7 +282,10 @@ export default function AppShell({ children }: AppShellProps) {
         bgcolor: 'background.default',
         color: 'text.primary',
         position: 'relative',
-        overflowX: 'hidden',
+        // `clip` (not `hidden`) — `hidden` would promote this Box to a scroll
+        // container, breaking `scroll-behavior: smooth` for in-page anchor
+        // clicks (ToC). `clip` clips just the same without that side effect.
+        overflowX: 'clip',
       }}
     >
       <a className="skip-link" href="#main-content">

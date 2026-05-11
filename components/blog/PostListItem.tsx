@@ -1,13 +1,11 @@
 'use client';
 
-import { 
-  Typography, 
-  Box, 
-  alpha, 
-  useTheme, 
-  Stack, 
+import {
+  Box,
   IconButton,
-  Tooltip
+  Stack,
+  Tooltip,
+  Typography,
 } from '@mui/material';
 import Link from 'next/link';
 import type { HTMLAttributes } from 'react';
@@ -38,13 +36,12 @@ interface PostListItemProps {
   isAdmin?: boolean;
   onDelete?: (id: string) => void;
   onPin?: (id: string) => void;
-  dragHandleProps?: HTMLAttributes<HTMLDivElement>; // For framer-motion reorder
+  dragHandleProps?: HTMLAttributes<HTMLDivElement>;
 }
 
 export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandleProps }: PostListItemProps) {
-  const theme = useTheme();
   const transitionNames = getPostViewTransitionNames(post.slug, post.isPinned);
-  const primaryTag = post.tags[0] ?? { name: 'general', slug: 'general' };
+  const primaryTag = post.tags[0] ?? { name: 'all', slug: 'all' };
 
   return (
     <Box
@@ -53,51 +50,37 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
         px: { xs: 2, md: 3 },
         mb: 2,
         borderRadius: `${tokens.radius.md}px`,
-        bgcolor: alpha(theme.palette.background.paper, 0.4),
-        backdropFilter: 'blur(10px)',
-        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: (t) => t.palette.outlineVariant,
         position: 'relative',
         containerType: 'inline-size',
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        overflow: 'hidden',
+        transition: `border-color ${tokens.duration.short3}ms ${tokens.transitions.standard}`,
         '&:hover': {
-          borderColor: alpha(theme.palette.primary.main, 0.25),
-          bgcolor: alpha(theme.palette.background.paper, 0.55),
-          '& .action-buttons': { opacity: 1, transform: 'translateX(0)' },
-          '& .title-text': { color: 'primary.main' },
-          '& .glint': {
-            left: '125%',
-          }
-        }
+          borderColor: 'text.primary',
+          '& .action-buttons': { opacity: 1 },
+          '& .title-text': { color: 'text.primary' },
+        },
       }}
     >
-      {/* Premium Glint Effect */}
-      <Box
-        className="glint"
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: '-25%',
-          width: '25%',
-          height: '100%',
-          background: `linear-gradient(to right, transparent, ${alpha(theme.palette.primary.main, 0.05)}, transparent)`,
-          transform: 'skewX(-25deg)',
-          transition: 'left 0.7s ease-in-out',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+        {isAdmin && post.isPinned && (
+          <Box
+            {...dragHandleProps}
+            sx={{
+              display: { xs: 'none', md: 'block' },
+              cursor: 'grab',
+              mt: 0.5,
+              color: 'text.secondary',
+              opacity: 0.4,
+              '&:hover': { opacity: 1 },
+            }}
+          >
+            <DragIndicatorIcon fontSize="small" />
+          </Box>
+        )}
 
-      <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
-      {/* Drag Handle (Admin only, during reorder) */}
-      {isAdmin && post.isPinned && (
-        <Box {...dragHandleProps} sx={{ display: { xs: 'none', md: 'block' }, cursor: 'grab', mt: 0.5, color: 'text.secondary', opacity: 0.3, '&:hover': { opacity: 1 } }}>
-          <DragIndicatorIcon fontSize="small" />
-        </Box>
-      )}
-
-      <Box sx={{ flexGrow: 1 }}>
-          {/* Title */}
+        <Box sx={{ flexGrow: 1 }}>
           <Link
             href={`/blog/${post.slug}`}
             prefetch={true}
@@ -109,159 +92,177 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
                 variant="h3"
                 className="title-text"
                 sx={{
-                  fontWeight: 800,
-                  fontSize: { xs: '1.2rem', md: '1.5rem' },
-                  lineHeight: 1.25,
-                  letterSpacing: '-0.02em',
+                  fontWeight: 600,
+                  fontSize: { xs: '1.15rem', md: '1.4rem' },
+                  lineHeight: 1.3,
+                  letterSpacing: '-0.015em',
                   color: 'text.primary',
-                  transition: 'color 0.3s ease',
+                  transition: 'color 0.15s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  wordBreak: 'break-word'
+                  wordBreak: 'break-word',
                 }}
               >
                 {post.isPinned && (
-                  <PushPinIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'primary.main', transform: 'rotate(20deg)' }} />
+                  <PushPinIcon
+                    sx={{
+                      fontSize: '1.1rem',
+                      mr: 1.25,
+                      color: 'text.secondary',
+                    }}
+                  />
                 )}
                 {isAdmin && post.published === false && (
-                  <HistoryEduIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'warning.main' }} />
+                  <HistoryEduIcon
+                    sx={{ fontSize: '1.1rem', mr: 1.25, color: 'text.secondary' }}
+                  />
                 )}
                 {post.title}
               </Typography>
             </ViewTransition>
           </Link>
 
-          {/* Metadata Row */}
-          <Stack 
-            direction="row" 
-            spacing={1} 
-            sx={{ 
-              mt: 1.5, 
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              mt: 1.25,
               alignItems: 'center',
               flexWrap: 'nowrap',
               width: '100%',
               overflow: 'hidden',
-              '& > *': { minWidth: 0 }
+              color: 'text.secondary',
+              '& > *': { minWidth: 0 },
             }}
           >
-            <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: 'primary.main',
-                  fontWeight: 800,
+            <Link
+              href={`/?tag=${primaryTag.slug}`}
+              style={{ textDecoration: 'none', flexShrink: 0 }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 600,
                   textTransform: 'lowercase',
-                  letterSpacing: '0.05em',
-                  transition: 'opacity 0.2s ease',
+                  letterSpacing: tokens.typography.tracking.micro,
                   whiteSpace: 'nowrap',
-                  '&:hover': {
-                    opacity: 0.8,
-                    textDecoration: 'underline'
-                  }
+                  transition: 'color 0.15s ease',
+                  '&:hover': { color: 'text.primary' },
                 }}
               >
                 #{primaryTag.name}
               </Typography>
             </Link>
 
-              
-              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3, flexShrink: 0 }} />
-              
-              <Stack
-                direction="row"
-                spacing={0.5}
+            <Box
+              sx={{
+                width: 3,
+                height: 3,
+                borderRadius: '50%',
+                bgcolor: 'currentColor',
+                opacity: 0.4,
+                flexShrink: 0,
+              }}
+            />
+
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ alignItems: 'center', flexShrink: 1, overflow: 'hidden' }}
+            >
+              <CalendarMonthIcon sx={{ fontSize: '0.8rem', opacity: 0.7, flexShrink: 0 }} />
+              <Typography
+                variant="caption"
                 sx={{
-                  alignItems: 'center',
-                  color: 'text.secondary',
-                  flexShrink: 1,
-                  overflow: 'hidden'
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
-                <CalendarMonthIcon sx={{ fontSize: '0.8rem', opacity: 0.7, flexShrink: 0 }} />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: vi }).replace(/^khoảng\s/, '')}
-                </Typography>
-              </Stack>
- 
-              <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: 'text.secondary', opacity: 0.3, flexShrink: 0 }} />
- 
-              <Stack
-                direction="row"
-                spacing={0.5}
-                sx={{
-                  alignItems: 'center',
-                  color: 'text.secondary',
-                  flexShrink: 0
-                }}
-              >
-                <AccessTimeIcon sx={{ fontSize: '0.8rem', opacity: 0.7, flexShrink: 0 }} />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {post.readingTime}
-                </Typography>
-              </Stack>
+                {formatDistanceToNow(new Date(post.createdAt), {
+                  addSuffix: true,
+                  locale: vi,
+                }).replace(/^khoảng\s/, '')}
+              </Typography>
             </Stack>
+
+            <Box
+              sx={{
+                width: 3,
+                height: 3,
+                borderRadius: '50%',
+                bgcolor: 'currentColor',
+                opacity: 0.4,
+                flexShrink: 0,
+              }}
+            />
+
+            <Stack
+              direction="row"
+              spacing={0.5}
+              sx={{ alignItems: 'center', flexShrink: 0 }}
+            >
+              <AccessTimeIcon sx={{ fontSize: '0.8rem', opacity: 0.7, flexShrink: 0 }} />
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}
+              >
+                {post.readingTime}
+              </Typography>
+            </Stack>
+          </Stack>
         </Box>
- 
-        {/* Action Buttons (Admin Only) */}
+
         {isAdmin && (
           <Stack
             direction="row"
-            spacing={0.5}
+            spacing={0.25}
             className="action-buttons"
             sx={{
               display: { xs: 'none', md: 'flex' },
-              opacity: { md: 0.5 },
-              transform: { md: 'translateX(5px)' },
-              transition: 'all 0.3s ease',
-              ml: 2,
-              mt: 0.5
+              opacity: { md: 0.4 },
+              transition: `opacity ${tokens.duration.short3}ms ${tokens.transitions.standard}`,
+              ml: 1,
+              mt: 0.25,
             }}
           >
-            <Tooltip title={post.isPinned ? "Bỏ ghim" : "Ghim bài viết"}>
-              <IconButton 
-                size="small" 
+            <Tooltip title={post.isPinned ? 'Bỏ ghim' : 'Ghim bài viết'}>
+              <IconButton
+                size="small"
                 onClick={() => onPin?.(post.id)}
-                sx={{ 
-                  color: post.isPinned ? 'primary.main' : 'inherit',
-                  '& svg': {
-                    transform: post.isPinned ? 'rotate(90deg)' : 'none',
-                    transition: 'transform 0.3s ease'
-                  }
+                sx={{
+                  color: post.isPinned ? 'text.primary' : 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
                 }}
               >
                 <PushPinIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            
+
             <Tooltip title="Chỉnh sửa">
-              <IconButton 
-                size="small" 
-                component={Link} 
+              <IconButton
+                size="small"
+                component={Link}
                 href={`/admin/posts/edit/${post.id}`}
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { color: 'text.primary', bgcolor: 'transparent' },
+                }}
               >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            
+
             <Tooltip title="Xóa">
-              <IconButton 
-                size="small" 
-                color="error" 
+              <IconButton
+                size="small"
                 onClick={() => onDelete?.(post.id)}
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { color: 'error.main', bgcolor: 'transparent' },
+                }}
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>
@@ -269,6 +270,6 @@ export default function PostListItem({ post, isAdmin, onDelete, onPin, dragHandl
           </Stack>
         )}
       </Stack>
-      </Box>
+    </Box>
   );
 }

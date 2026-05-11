@@ -10,8 +10,11 @@ const isProd = process.env.NODE_ENV === "production";
 const nextConfig: NextConfig = {
   output: 'standalone',
   // Tree-shake named imports from heavy packages into per-symbol imports so
-  // unused MUI components / Lucide icons / date-fns locales don't end up in
-  // the client bundle. Each entry cuts tens-to-hundreds of KB on mobile.
+  // unused Lucide icons / date-fns locales / framer-motion exports don't end
+  // up in the client bundle. MUI is omitted: it's optimized by default in
+  // Next, and explicit per-symbol rewrites split @emotion/react across
+  // module paths, which triggers a Turbopack dev-mode hydration mismatch
+  // (different mui-{hash} classes on SSR vs CSR).
   experimental: {
     viewTransition: true,
     // Inline small CSS chunks into the HTML `<head>` so there's no render-
@@ -20,9 +23,6 @@ const nextConfig: NextConfig = {
     // styling never shows up as a stylesheet. Prod-only, per Next docs.
     inlineCss: true,
     optimizePackageImports: [
-      '@mui/material',
-      '@mui/icons-material',
-      '@mui/system',
       'lucide-react',
       'date-fns',
       'framer-motion',
@@ -40,6 +40,14 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' },
     ],
   },
+  async redirects() {
+    return [
+      // Old /blog index used to mirror the home page; now home owns the
+      // blog list. 308 (permanent + method-preserving) so search engines
+      // collapse duplicate-content signals onto `/`.
+      { source: '/blog', destination: '/', permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
@@ -47,10 +55,11 @@ const nextConfig: NextConfig = {
         // for dynamic responses) with `private, no-cache` so Chrome's bfcache
         // can keep the page alive on back/forward nav. `no-cache` still forces
         // revalidation on a fresh visit; `private` keeps it out of CDN caches.
-        // Excludes API routes, `_next/`, and static asset extensions so those
-        // keep their own cache semantics (auth endpoints stay `no-store`,
-        // static chunks stay `immutable`).
-        source: '/((?!api/|_next/|.*\\.(?:ico|png|jpg|jpeg|gif|webp|avif|svg|css|js|woff2?|ttf|otf|mp4|webm)$).*)',
+        // Excludes API routes, `_next/`, static assets, and feed/sitemap XML
+        // (those routes set their own SWR-friendly Cache-Control headers
+        // and shouldn't be marked `private` — RSS readers and search-engine
+        // crawlers expect them to be cacheable).
+        source: '/((?!api/|_next/|feed\\.xml|sitemap\\.xml|robots\\.txt|.*\\.(?:ico|png|jpg|jpeg|gif|webp|avif|svg|css|js|woff2?|ttf|otf|mp4|webm)$).*)',
         headers: [
           { key: 'Cache-Control', value: 'private, no-cache, must-revalidate' },
         ],

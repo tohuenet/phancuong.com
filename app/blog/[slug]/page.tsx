@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { auth } from '@/auth';
+import { isAdmin } from '@/lib/auth-config';
 import { Suspense, ViewTransition } from 'react';
 import { tokens } from '@/lib/theme-tokens';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -15,6 +16,9 @@ import CommentSection from '@/components/blog/CommentSection';
 import { getVisibleCommentsForPost } from '@/lib/comments';
 import { getPostViewTransitionNames } from '@/lib/post-view-transition';
 import PostHeader from '@/components/blog/PostHeader';
+import RelatedPosts from '@/components/blog/RelatedPosts';
+import TableOfContents from '@/components/blog/TableOfContents';
+import { getRelatedPosts } from '@/lib/blog';
 import dynamic from 'next/dynamic';
 // Defer the progress bar — it's decorative, not above-the-fold. Next 14+
 // forbids `ssr: false` in Server Components; dropping it is fine because
@@ -35,10 +39,15 @@ export async function generateMetadata({ params }: PostDetailPageProps): Promise
   if (!post) return { title: 'Không tìm thấy bài viết' };
 
   const canonicalPath = `/blog/${post.slug}`;
-  const ogImage = post.thumbnailUrl || undefined;
 
+  // OG/Twitter image is provided by the file convention at
+  // ./opengraph-image.tsx — it overlays the title + tags on the
+  // post thumbnail (or a branded gradient when none is set).
+  // Title goes through the layout's `template: '%s | phancuong.com'`,
+  // so we return only the post title here — appending the suffix
+  // manually would double it ("Title | phancuong.com | phancuong.com").
   return {
-    title: `${post.title} | phancuong.com`,
+    title: post.title,
     description: post.excerpt || 'Technical article and exploration.',
     alternates: {
       canonical: canonicalPath,
@@ -51,15 +60,11 @@ export async function generateMetadata({ params }: PostDetailPageProps): Promise
       publishedTime: new Date(post.createdAt).toISOString(),
       modifiedTime: new Date(post.updatedAt).toISOString(),
       authors: post.author?.name ? [post.author.name] : undefined,
-      images: ogImage
-        ? [{ url: ogImage, width: 1200, height: 630, alt: post.title }]
-        : undefined,
     },
     twitter: {
-      card: ogImage ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title: post.title,
       description: post.excerpt || '',
-      images: ogImage ? [ogImage] : undefined,
     },
   };
 }
@@ -110,6 +115,14 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
           <HeaderLoader slug={slug} />
         </Suspense>
 
+        {/* ToC sits here so the inline (wide-mode) variant lands between
+            the post header and the article body. The sidebar (focused-mode)
+            and FAB (mobile) variants are position:fixed, so this placement
+            doesn't visually affect them. */}
+        <Suspense fallback={null}>
+          <TocLoader slug={slug} />
+        </Suspense>
+
         <Box component="article">
           {/* Granular Suspense for Body (Skeleton) */}
           <Suspense
@@ -122,6 +135,10 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
             <ArticleBodyLoader slug={slug} />
           </Suspense>
         </Box>
+
+        <Suspense fallback={null}>
+          <RelatedPostsLoader slug={slug} />
+        </Suspense>
 
         {/* Fallback is null (not a full CommentSection) so the fallback
             copy doesn't mount-and-fetch before the server-rendered copy
@@ -217,9 +234,7 @@ async function ArticleSchema({ slug }: { slug: string }) {
 // Independent Metadata/Header Loader
 async function HeaderLoader({ slug }: { slug: string }) {
   const session = await auth();
-  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
-  
-  const postMeta = await getPostMetaBySlug(slug, isAdmin);
+  const postMeta = await getPostMetaBySlug(slug, isAdmin(session));
   if (!postMeta) notFound();
 
   const transitionNames = getPostViewTransitionNames(postMeta.slug, postMeta.isPinned);
@@ -229,9 +244,7 @@ async function HeaderLoader({ slug }: { slug: string }) {
 // Independent Article Content Loader
 async function ArticleBodyLoader({ slug }: { slug: string }) {
   const session = await auth();
-  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
-
-  const post = await getPostBySlug(slug, isAdmin);
+  const post = await getPostBySlug(slug, isAdmin(session));
   if (!post) return null;
 
   return (
@@ -245,13 +258,24 @@ import PostDetailAdminActions from '@/components/blog/PostDetailAdminActions';
 
 // SSR comments so the initial list renders on first paint and the client
 // skips the fetch-on-mount waterfall. Privacy masking mirrors the API route.
+async function TocLoader({ slug }: { slug: string }) {
+  const session = await auth();
+  const post = await getPostBySlug(slug, isAdmin(session));
+  if (!post?.headings || post.headings.length < 2) return null;
+  return <TableOfContents headings={post.headings} />;
+}
+
+async function RelatedPostsLoader({ slug }: { slug: string }) {
+  const posts = await getRelatedPosts(slug, 3);
+  return <RelatedPosts posts={posts} />;
+}
+
 async function CommentSectionLoader({ slug }: { slug: string }) {
   const session = await auth();
-  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
   const initialComments = await getVisibleCommentsForPost(
     slug,
     session?.user?.email,
-    isAdmin,
+    isAdmin(session),
   );
   return <CommentSection postSlug={slug} initialComments={initialComments} />;
 }
@@ -259,9 +283,7 @@ async function CommentSectionLoader({ slug }: { slug: string }) {
 // Independent Edit Button Loader
 async function EditButtonLoader({ slug }: { slug: string }) {
   const session = await auth();
-  const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
-
-  if (!isAdmin) return null;
+  if (!isAdmin(session)) return null;
 
   const post = await PostsDB.getBySlug(slug);
   if (!post) return null;

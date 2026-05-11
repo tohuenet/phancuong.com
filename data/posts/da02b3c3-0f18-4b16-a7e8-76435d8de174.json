@@ -15,5 +15,8 @@
       "name": "infrastructure",
       "slug": "infrastructure"
     }
-  ]
+  ],
+  "isPinned": false,
+  "pinnedOrder": 0,
+  "deletedAt": "2026-05-11T01:00:00.000Z"
 }

@@ -49,6 +49,12 @@ export const metadata: Metadata = {
   description: 'Technical articles, engineering insights, and software development tutorials.',
   alternates: {
     canonical: '/',
+    types: {
+      // RSS autodiscovery — emits <link rel="alternate" type="application/rss+xml">
+      // so feed readers (Feedly, Inoreader, NetNewsWire) can subscribe via the
+      // site URL without the user knowing the feed path.
+      'application/rss+xml': '/feed.xml',
+    },
   },
   openGraph: {
     title: 'Technical Blog & Portfolio',

@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { PostsDB } from '@/lib/storage';
 import { auth } from '@/auth';
+import { isAdmin } from '@/lib/auth-config';
 import { revalidateTag } from 'next/cache';
 import { BLOG_CACHE_TAGS } from '@/lib/blog';
 
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session?.user) {
+    if (!isAdmin(session)) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 

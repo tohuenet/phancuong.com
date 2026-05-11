@@ -20,7 +20,17 @@ import { Subscript } from '@tiptap/extension-subscript';
 import { Superscript } from '@tiptap/extension-superscript';
 import { CharacterCount } from '@tiptap/extension-character-count';
 import { FontFamily } from '@tiptap/extension-font-family';
-import { common, createLowlight } from 'lowlight';
+import { createLowlight } from 'lowlight';
+import bash from 'highlight.js/lib/languages/bash';
+import css from 'highlight.js/lib/languages/css';
+import javascript from 'highlight.js/lib/languages/javascript';
+import json from 'highlight.js/lib/languages/json';
+import markdown from 'highlight.js/lib/languages/markdown';
+import php from 'highlight.js/lib/languages/php';
+import plaintext from 'highlight.js/lib/languages/plaintext';
+import shell from 'highlight.js/lib/languages/shell';
+import sql from 'highlight.js/lib/languages/sql';
+import typescript from 'highlight.js/lib/languages/typescript';
 import { tokens } from '@/lib/theme-tokens';
 
 
@@ -65,7 +75,22 @@ import {
   ArrowUp,
   ArrowDown
 } from 'lucide-react';
-const lowlight = createLowlight(common);
+// Register a curated language set — exclude xml/python/haskell whose
+// `\p{L}` / `\p{XID_*}` regexes get expanded by SWC into giant char
+// classes that Chrome rejects with "Range out of order". Without
+// `common`, lowlight.highlightAuto won't iterate (and trip over) them.
+const lowlight = createLowlight({
+  bash,
+  css,
+  javascript,
+  json,
+  markdown,
+  php,
+  plaintext,
+  shell,
+  sql,
+  typescript,
+});
 
 interface TiptapEditorProps {
   value: string;
@@ -110,6 +135,10 @@ export default function TiptapEditor({ value, onChange, placeholder, id = 'new-p
       }),
       CodeBlockLowlight.configure({
         lowlight,
+        // Avoid lowlight.highlightAuto() — it iterates every registered
+        // language and compiles each grammar's regexes; one bad expansion
+        // crashes the editor before the user sees it.
+        defaultLanguage: 'plaintext',
       }),
       TaskList,
       TaskItem.configure({

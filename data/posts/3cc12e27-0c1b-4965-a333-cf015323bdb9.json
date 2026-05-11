@@ -1,0 +1,22 @@
+{
+  "title": "hahah",
+  "slug": "hahah",
+  "content": "<p>hahahahaha</p>",
+  "excerpt": "",
+  "thumbnailUrl": "",
+  "published": true,
+  "order": 0,
+  "id": "3cc12e27-0c1b-4965-a333-cf015323bdb9",
+  "createdAt": "2026-05-10T11:06:10.344Z",
+  "updatedAt": "2026-05-10T11:06:10.344Z",
+  "isPinned": false,
+  "pinnedOrder": 0,
+  "tags": [
+    {
+      "id": "03eb9005-c277-4983-afd7-2736188e6f39",
+      "name": "aha",
+      "slug": "aha"
+    }
+  ],
+  "deletedAt": "2026-05-10T17:08:23.974Z"
+}

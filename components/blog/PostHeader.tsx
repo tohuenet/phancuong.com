@@ -11,6 +11,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
 import { m } from 'framer-motion';
+import { tokens } from '@/lib/theme-tokens';
 import type { PostViewTransitionNames } from '@/lib/post-view-transition';
 
 interface PostHeaderProps {
@@ -27,7 +28,7 @@ interface PostHeaderProps {
 }
 
 export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
-  const primaryTag = post.tags[0] ?? { name: 'general', slug: 'general' };
+  const primaryTag = post.tags[0] ?? { name: 'all', slug: 'all' };
 
   return (
     <m.div
@@ -42,12 +43,11 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
             component="h1"
             className="title-text"
             sx={{
-              fontWeight: 800,
-              fontSize: { xs: '1.5rem', md: '2.5rem' },
+              fontWeight: 600,
+              fontSize: { xs: '1.5rem', md: '2.4rem' },
               lineHeight: 1.2,
-              letterSpacing: '-0.03em',
+              letterSpacing: '-0.02em',
               color: 'text.primary',
-              transition: 'color 0.3s ease',
               display: 'flex',
               alignItems: 'center',
               mb: 2,
@@ -55,10 +55,10 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
             }}
           >
             {post.isPinned && (
-              <PushPinIcon sx={{ fontSize: '1.8rem', mr: 2, color: 'primary.main', transform: 'rotate(20deg)' }} />
+              <PushPinIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'text.secondary' }} />
             )}
             {post.published === false && (
-              <HistoryEduIcon sx={{ fontSize: '1.8rem', mr: 2, color: 'warning.main' }} />
+              <HistoryEduIcon sx={{ fontSize: '1.4rem', mr: 1.5, color: 'text.secondary' }} />
             )}
             {post.title}
           </Typography>
@@ -75,20 +75,17 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
             '& > *': { minWidth: 0 }
           }}
         >
-            <Link href={`/blog?tag=${primaryTag.slug}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+            <Link href={`/?tag=${primaryTag.slug}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'primary.main',
-                  fontWeight: 800,
+                  color: 'text.secondary',
+                  fontWeight: 600,
                   textTransform: 'lowercase',
-                  letterSpacing: '0.05em',
+                  letterSpacing: tokens.typography.tracking.micro,
                   whiteSpace: 'nowrap',
-                  transition: 'opacity 0.2s ease',
-                  '&:hover': {
-                    opacity: 0.8,
-                    textDecoration: 'underline',
-                  },
+                  transition: 'color 0.15s ease',
+                  '&:hover': { color: 'text.primary' },
                 }}
               >
                 #{primaryTag.name}
@@ -111,7 +108,7 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
               <Typography
                 variant="caption"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 500,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -136,7 +133,7 @@ export default function PostHeader({ post, transitionNames }: PostHeaderProps) {
             <Typography
               variant="caption"
               sx={{
-                fontWeight: 600,
+                fontWeight: 500,
                 whiteSpace: 'nowrap'
               }}
             >

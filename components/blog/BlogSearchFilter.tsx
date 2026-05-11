@@ -2,17 +2,15 @@
 
 import {
   Box,
-  TextField,
   Chip,
-  InputAdornment,
   IconButton,
-  useTheme,
-  alpha
+  InputAdornment,
+  TextField,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { tokens } from '@/lib/theme-tokens';
 
 interface TagWithCount {
@@ -28,11 +26,18 @@ interface BlogSearchFilterProps {
 
 export default function BlogSearchFilter({ tags }: BlogSearchFilterProps) {
   const router = useRouter();
-  const theme = useTheme();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState(searchParams.get('q') || '');
-  const activeTag = searchParams.get('tag') || '';
+  const urlQ = searchParams.get('q') || '';
+  const rawTag = searchParams.get('tag') || '';
+  const activeTag = rawTag === 'all' ? '' : rawTag;
+
+  const [search, setSearch] = useState(urlQ);
+  const [trackedUrlQ, setTrackedUrlQ] = useState(urlQ);
+  if (trackedUrlQ !== urlQ) {
+    setTrackedUrlQ(urlQ);
+    setSearch(urlQ);
+  }
 
   const handleTagClick = (tagSlug: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -42,32 +47,57 @@ export default function BlogSearchFilter({ tags }: BlogSearchFilterProps) {
       params.set('tag', tagSlug);
     }
     params.set('page', '1');
-    router.push(`/blog?${params.toString()}`);
+    router.push(`/?${params.toString()}`);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams(searchParams.toString());
-    if (search) {
-      params.set('q', search);
-    } else {
-      params.delete('q');
-    }
-    params.set('page', '1');
-    router.push(`/blog?${params.toString()}`);
-  };
+  // Debounce: push search to URL 300ms after the user stops typing.
+  useEffect(() => {
+    if (search === urlQ) return;
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (search) params.set('q', search);
+      else params.delete('q');
+      params.set('page', '1');
+      router.replace(`/?${params.toString()}`);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, urlQ, searchParams, router]);
 
-  const clearSearch = () => {
-    setSearch('');
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('q');
-    router.push(`/blog?${params.toString()}`);
-  };
+  const clearSearch = () => setSearch('');
+
+  // M3 filter-chip style: secondaryContainer fill when selected,
+  // outlineVariant border when not. Plain hover, no lift, no shadow.
+  const chipSx = (selected: boolean) => ({
+    borderRadius: `${tokens.radius.full}px`,
+    fontSize: '0.85rem',
+    fontWeight: selected ? 600 : 500,
+    bgcolor: selected
+      ? (t: import('@mui/material').Theme) => t.palette.secondaryContainer
+      : 'transparent',
+    color: selected
+      ? (t: import('@mui/material').Theme) => t.palette.onSecondaryContainer
+      : 'text.secondary',
+    border: '1px solid',
+    borderColor: selected
+      ? 'transparent'
+      : (t: import('@mui/material').Theme) => t.palette.outlineVariant,
+    transition: `background-color ${tokens.duration.short3}ms ${tokens.transitions.standard}, border-color ${tokens.duration.short3}ms ${tokens.transitions.standard}, color ${tokens.duration.short3}ms ${tokens.transitions.standard}`,
+    '&:hover': {
+      bgcolor: selected
+        ? (t: import('@mui/material').Theme) => t.palette.secondaryContainer
+        : 'transparent',
+      borderColor: selected ? 'transparent' : 'text.primary',
+      color: selected
+        ? (t: import('@mui/material').Theme) => t.palette.onSecondaryContainer
+        : 'text.primary',
+    },
+  });
 
   return (
-    <Box>
-      {/* Search Section */}
-      <Box component="form" onSubmit={handleSearchSubmit} sx={{ mb: 4 }}>
+    // suppressHydrationWarning: password-manager extensions inject attrs
+    // onto containers that wrap a text input, racing with React hydration.
+    <Box suppressHydrationWarning>
+      <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
           size="small"
@@ -78,7 +108,10 @@ export default function BlogSearchFilter({ tags }: BlogSearchFilterProps) {
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: 'primary.main', opacity: 0.6 }} fontSize="small" />
+                  <SearchIcon
+                    sx={{ color: 'text.secondary', opacity: 0.7 }}
+                    fontSize="small"
+                  />
                 </InputAdornment>
               ),
               endAdornment: search && (
@@ -92,73 +125,43 @@ export default function BlogSearchFilter({ tags }: BlogSearchFilterProps) {
           }}
           sx={{
             '& .MuiOutlinedInput-root': {
-              borderRadius: tokens.radius.sm,
-              bgcolor: alpha(theme.palette.background.default, 0.5),
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: alpha(theme.palette.background.default, 0.8),
+              borderRadius: `${tokens.radius.sm}px`,
+              bgcolor: 'background.paper',
+              transition: `border-color ${tokens.duration.short3}ms ${tokens.transitions.standard}`,
+              '& fieldset': {
+                borderColor: (t) => t.palette.outlineVariant,
               },
-              '&.Mui-focused': {
-                bgcolor: alpha(theme.palette.background.default, 1),
-                boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-              }
-            }
+              '&:hover fieldset': {
+                borderColor: 'text.primary',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'text.primary',
+                borderWidth: 1,
+              },
+            },
           }}
         />
       </Box>
 
-      {/* Hashtag Cloud Section */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         <Chip
-          label="#tất-cả"
+          label="#all"
           onClick={() => {
             const params = new URLSearchParams(searchParams.toString());
             params.delete('tag');
             params.set('page', '1');
-            router.push(`/blog?${params.toString()}`);
+            router.push(`/?${params.toString()}`);
           }}
-          sx={{ 
-            borderRadius: tokens.radius.full,
-            fontWeight: !activeTag ? 800 : 500,
-            fontSize: '0.85rem',
-            bgcolor: !activeTag ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-            color: !activeTag ? 'primary.main' : 'text.secondary',
-            border: `1px solid ${!activeTag ? alpha(theme.palette.primary.main, 1) : alpha(theme.palette.text.secondary, 0.1)}`,
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
-              borderColor: theme.palette.primary.main,
-              color: 'primary.main',
-              transform: 'translateY(-2px)'
-            }
-          }}
+          sx={chipSx(!activeTag)}
         />
-        {tags.map((tag) => {
-          const isActive = activeTag === tag.slug;
-          return (
-            <Chip
-              key={tag.id}
-              label={`#${tag.slug}`}
-              onClick={() => handleTagClick(tag.slug)}
-              sx={{ 
-                borderRadius: tokens.radius.full, 
-                fontWeight: isActive ? 800 : 500,
-                fontSize: '0.85rem',
-                bgcolor: isActive ? alpha(theme.palette.primary.main, 0.15) : 'transparent',
-                color: isActive ? 'primary.main' : 'text.secondary',
-                border: `1px solid ${isActive ? alpha(theme.palette.primary.main, 1) : alpha(theme.palette.text.secondary, 0.1)}`,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  borderColor: theme.palette.primary.main,
-                  color: 'primary.main',
-                  transform: 'translateY(-2px)',
-                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
-                }
-              }}
-            />
-          );
-        })}
+        {tags.map((tag) => (
+          <Chip
+            key={tag.id}
+            label={`#${tag.slug}`}
+            onClick={() => handleTagClick(tag.slug)}
+            sx={chipSx(activeTag === tag.slug)}
+          />
+        ))}
       </Box>
     </Box>
   );

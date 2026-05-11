@@ -1,0 +1,27 @@
+{
+  "title": "Phần 3 — Cache vs Artifacts: chiến lược và Reports",
+  "slug": "gitlab-cicd-cache-artifacts-reports",
+  "content": "<blockquote><p><strong>Series GitLab CI/CD Toàn Tập — 9 phần:</strong></p><ol><li><p><a href=\"/blog/gitlab-cicd-tong-quan-kien-truc-khai-niem\">Phần 1 — Tổng quan: GitLab CI/CD, kiến trúc và các khái niệm</a></p></li><li><p><a href=\"/blog/gitlab-cicd-yml-variables\">Phần 2 — .gitlab-ci.yml đầu tiên và Variables (predefined, UI, masked)</a></p></li><li><p><strong>Phần 3 — Cache vs Artifacts: chiến lược và Reports</strong> ← bạn đang đọc</p></li><li><p><a href=\"/blog/gitlab-cicd-rules-merge-request-pipelines\">Phần 4 — Rules và Merge Request Pipelines</a></p></li><li><p><a href=\"/blog/gitlab-cicd-runner-self-hosted-docker\">Phần 5 — GitLab Runner self-hosted: cài đặt và executors (Shell/Docker)</a></p></li><li><p><a href=\"/blog/gitlab-cicd-kubernetes-executor\">Phần 6 — Kubernetes executor: scale runner trên K8s</a></p></li><li><p><a href=\"/blog/gitlab-cicd-include-extends-anchors\">Phần 7 — include, extends, anchors — pipeline modular</a></p></li><li><p><a href=\"/blog/gitlab-cicd-environments-review-apps\">Phần 8 — Environments, Deployments và Review Apps</a></p></li><li><p><a href=\"/blog/gitlab-cicd-pipeline-nextjs-k8s\">Phần 9 — Pipeline thực tế Next.js → Docker → K8s + best practices + debug</a></p></li></ol></blockquote><h2>Mở đầu</h2><p>Cache và Artifacts là hai khái niệm trông giống nhau (cùng lưu file giữa các bước) nhưng khác hoàn toàn về mục đích và phạm vi. Nhầm lẫn là nguyên nhân hàng đầu khiến pipeline chậm, hoặc deploy nhầm code cũ. Phần này tách rõ hai khái niệm, thêm chiến lược cache tối ưu (key theo lockfile, policy <code>pull</code>) và <strong>Reports</strong> — tính năng cho phép GitLab parse JUnit, coverage để hiện trực tiếp trong MR.</p><h2>1. Cache vs Artifacts — đừng nhầm</h2><p>Hai khái niệm tưởng giống nhưng khác hoàn toàn về mục đích:</p><table><thead><tr><th></th><th>Cache</th><th>Artifacts</th></tr></thead><tbody><tr><td>Mục đích</td><td>Tăng tốc job (dùng lại deps)</td><td>Truyền data giữa các job/stage</td></tr><tr><td>Phạm vi</td><td>Giữa các pipeline khác nhau</td><td>Giữa các job cùng pipeline</td></tr><tr><td>Truyền tự động xuống job sau</td><td>Không — phải đặt cùng key</td><td>Có — mọi job stage sau tự download</td></tr><tr><td>Trường hợp dùng</td><td><code>node_modules</code>, <code>~/.m2</code></td><td>build output, test reports</td></tr></tbody></table><h3>Cache có chiến lược tốt hơn</h3><pre><code>cache:\n  key:\n    files:\n      - pnpm-lock.yaml   # Cache mới khi lockfile đổi\n  paths:\n    - .pnpm-store/\n  policy: pull-push      # mặc định: kéo cache khi start, đẩy cache khi end</code></pre><p>Job chỉ <em>đọc</em> cache (không cần ghi) thì đặt <code>policy: pull</code> — tiết kiệm vài chục giây upload.</p><h3>Artifacts có thêm reports</h3><pre><code>test-job:\n  stage: test\n  script:\n    - pnpm test --reporter=junit --output=junit.xml\n  artifacts:\n    when: always           # Lưu cả khi job fail (để debug)\n    expire_in: 30 days\n    paths:\n      - junit.xml\n      - coverage/\n    reports:\n      junit: junit.xml     # GitLab UI hiện tab \"Tests\"\n      coverage_report:\n        coverage_format: cobertura\n        path: coverage/cobertura.xml</code></pre><p>Khi đặt <code>reports:</code>, GitLab parse file để hiển thị trực tiếp trong merge request — tab \"Tests\", widget code coverage, security scanning…</p><h2>Tóm tắt</h2><p>Trong phần này bạn đã nắm:</p><ul><li><p><strong>Cache</strong>: tăng tốc job, giữa các pipeline, phải đặt cùng <code>key</code> ở các job dùng chung.</p></li><li><p><strong>Artifacts</strong>: truyền data giữa job cùng pipeline, job stage sau tự download.</p></li><li><p>Chiến lược cache tốt: <code>key.files: [pnpm-lock.yaml]</code> — cache mới khi lockfile đổi; <code>policy: pull</code> cho job chỉ đọc, tiết kiệm upload.</p></li><li><p><strong>Reports</strong>: <code>artifacts.reports.junit</code> hiện tab Tests trong MR; <code>coverage_report</code> với Cobertura hiện widget coverage; <code>when: always</code> để lưu cả khi job fail.</p></li></ul><p>Trong <a href=\"/blog/gitlab-cicd-rules-merge-request-pipelines\"><strong>Phần 4</strong></a>, ta học cú pháp <strong>rules</strong> mới (thay only/except) và hiểu rõ 3 chế độ pipeline: branch, MR pipeline, và Merged Results.</p><hr><p><a href=\"/blog/gitlab-cicd-rules-merge-request-pipelines\"><strong>Phần 4:</strong> Rules và Merge Request Pipelines</a> →</p>",
+  "excerpt": "Phân biệt rõ Cache vs Artifacts, chiến lược cache với policy pull/pull-push, và Reports để hiện test/coverage trong MR.",
+  "thumbnailUrl": "",
+  "published": true,
+  "order": 3,
+  "id": "cbfaedf4-23e5-4f2c-8514-b538db92f5fc",
+  "createdAt": "2026-05-11T11:55:00.000Z",
+  "updatedAt": "2026-05-11T11:55:00.000Z",
+  "tags": [
+    {
+      "id": "c5ab3ef7-99bf-42b1-bb65-3235a341a790",
+      "name": "ci-cd",
+      "slug": "ci-cd"
+    },
+    {
+      "id": "b1857961-0490-4fee-9999-d39dffea627b",
+      "name": "devops",
+      "slug": "devops"
+    }
+  ],
+  "isPinned": false,
+  "pinnedOrder": 0,
+  "seriesId": "b5333de6-daac-4b9c-ae45-7dbf29c8f836"
+}

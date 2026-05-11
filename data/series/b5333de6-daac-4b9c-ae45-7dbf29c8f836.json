@@ -1,0 +1,7 @@
+{
+  "id": "b5333de6-daac-4b9c-ae45-7dbf29c8f836",
+  "slug": "gitlab-cicd-toan-tap",
+  "title": "GitLab CI/CD Toàn Tập — Từ .gitlab-ci.yml Đến Kubernetes Executor",
+  "description": "Series 9 phần hướng dẫn GitLab CI/CD từ cơ bản đến production: kiến trúc, .gitlab-ci.yml, cache/artifacts, rules, GitLab Runner self-hosted với Docker & Kubernetes executor, include/extends, environments, review apps và pipeline Next.js thực tế.",
+  "thumbnailUrl": ""
+}

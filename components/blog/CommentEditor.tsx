@@ -34,6 +34,19 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { splitCommentContent, combineCommentContent } from '@/lib/comment-content';
+import { useFeedback } from '@/components/Providers/FeedbackProvider';
+
+// Mirrors the limits enforced server-side by /api/upload — keep in sync.
+// Validating client-side too means we fail fast (no roundtrip with a 5MB
+// image just to learn it's rejected) and give the user a friendlier error.
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const ALLOWED_UPLOAD_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+]);
 
 interface CommentEditorProps {
   value: string;
@@ -59,6 +72,7 @@ export default function CommentEditor({
   autoFocus,
 }: CommentEditorProps) {
   const theme = useTheme();
+  const { notify } = useFeedback();
   const [isMounted, setIsMounted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -147,6 +161,17 @@ export default function CommentEditor({
 
   const handleImageUpload = useCallback(
     async (file: File) => {
+      // Validate before opening a connection — saves a 5MB roundtrip when
+      // the user picks an oversized file from a phone camera.
+      if (!ALLOWED_UPLOAD_TYPES.has(file.type)) {
+        notify('Định dạng ảnh không hỗ trợ.', 'error');
+        return;
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        notify('Ảnh quá lớn — tối đa 5MB.', 'error');
+        return;
+      }
+
       setIsUploading(true);
       const formData = new FormData();
       formData.append('file', file);
@@ -157,6 +182,10 @@ export default function CommentEditor({
           body: formData,
         });
         const data = await res.json();
+        if (!res.ok) {
+          notify(data?.error || 'Tải ảnh thất bại.', 'error');
+          return;
+        }
         if (data.url) {
           const next = [...attachmentsRef.current, data.url as string];
           setAttachments(next);
@@ -164,11 +193,12 @@ export default function CommentEditor({
         }
       } catch (error) {
         console.error('Upload failed', error);
+        notify('Lỗi mạng khi tải ảnh.', 'error');
       } finally {
         setIsUploading(false);
       }
     },
-    [emitCombined]
+    [emitCombined, notify]
   );
 
   useEffect(() => {

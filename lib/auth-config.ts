@@ -1,5 +1,15 @@
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, Session } from "next-auth";
 import Google from "next-auth/providers/google";
+
+/**
+ * Single source of truth for "is this session an admin?".
+ * The check itself lives in `session()` callback below — this helper
+ * is just a typed reader so call sites don't need to know the rule.
+ * Type predicate so a passing check narrows `session` to non-null.
+ */
+export function isAdmin(session: Session | null | undefined): session is Session {
+  return session?.user?.isAdmin === true;
+}
 
 export const authConfig: NextAuthConfig = {
   providers: [

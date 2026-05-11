@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { m, AnimatePresence } from 'framer-motion';
 import { Box, Typography, alpha, useTheme } from '@mui/material';
 
@@ -83,42 +82,10 @@ const FullPageLoader: React.FC<FullPageLoaderProps> = ({
               }}
             />
 
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 60,
-                height: 60,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <m.div
-                animate={{
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <Image
-                  src="/logo.png"
-                  alt="Logo"
-                  width={60}
-                  height={60}
-                  priority
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              </m.div>
-            </Box>
+            {/* No inner mark — the gradient orb + ring is identity enough.
+                The previous `<Image src="/logo.png" />` 404'd because the
+                file never existed; tried a "P" monogram but felt off, so
+                we leave the orb on its own. */}
           </Box>
 
           {/* Loading Text */}

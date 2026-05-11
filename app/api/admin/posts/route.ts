@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { isAdmin } from '@/lib/auth-config';
 import { PostsDB } from '@/lib/storage';
 import { revalidateTag } from 'next/cache';
-import { BLOG_CACHE_TAGS } from '@/lib/blog';
+import { BLOG_CACHE_TAGS, ensureUniquePostSlug } from '@/lib/blog';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET() {
   const session = await auth();
-  
-  // Security Check
-  if (!session || session.user?.email !== process.env.ALLOWED_EMAIL) {
+
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -26,18 +26,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session || session.user?.email !== process.env.ALLOWED_EMAIL) {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const { tagsString, ...postData } = await request.json();
-    
-    // Check for slug uniqueness
-    const existing = await PostsDB.getBySlug(postData.slug);
-    if (existing) {
-      return NextResponse.json({ error: 'Slug already exists. Please choose another one.' }, { status: 400 });
-    }
+
+    // Auto-suffix on collision (e.g. `my-title` → `my-title-2`) so duplicate
+    // titles never block creation. Admin can still manually edit the slug
+    // afterwards if the auto-pick isn't desired.
+    postData.slug = await ensureUniquePostSlug(postData.slug);
 
     // Process tags
     const tags = tagsString 
@@ -53,6 +52,8 @@ export async function POST(request: Request) {
       id: uuidv4(),
       createdAt: now,
       updatedAt: now,
+      isPinned: false,
+      pinnedOrder: 0,
       tags
     });
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { isAdmin } from '@/lib/auth-config';
 import { PostsDB, CommentsDB } from '@/lib/storage';
 import { revalidateTag } from 'next/cache';
 import { BLOG_CACHE_TAGS } from '@/lib/blog';
@@ -14,7 +15,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const session = await auth();
-  if (!session || session.user?.email !== process.env.ALLOWED_EMAIL) {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -84,7 +85,7 @@ export async function DELETE(
 ) {
   const { id } = await params;
   const session = await auth();
-  if (!session || session.user?.email !== process.env.ALLOWED_EMAIL) {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

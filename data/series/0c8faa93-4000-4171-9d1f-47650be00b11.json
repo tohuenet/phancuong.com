@@ -1,0 +1,7 @@
+{
+  "id": "0c8faa93-4000-4171-9d1f-47650be00b11",
+  "slug": "kubernetes-toan-tap",
+  "title": "Kubernetes Toàn Tập — Từ Cơ Bản Đến Production",
+  "description": "Series 10 phần hướng dẫn Kubernetes từ A đến Z theo chuẩn tài liệu chính thức: kiến trúc, cài đặt, workloads, networking, storage, configuration, security, autoscaling, Helm/Operator, và production best practices.",
+  "thumbnailUrl": ""
+}

@@ -1,0 +1,27 @@
+{
+  "title": "Phần 3 — Secrets, Variables và Environment protection",
+  "slug": "github-actions-secrets-variables-environment",
+  "content": "<blockquote><p><strong>Series GitHub Actions Toàn Tập — 8 phần:</strong></p><ol><li><p><a href=\"/blog/github-actions-tong-quan-cicd-khai-niem\">Phần 1 — Tổng quan: CI/CD, GitHub Actions và các khái niệm cốt lõi</a></p></li><li><p><a href=\"/blog/github-actions-workflow-yaml-triggers\">Phần 2 — Workflow YAML đầu tiên và Triggers nâng cao</a></p></li><li><p><strong>Phần 3 — Secrets, Variables và Environment protection</strong> ← bạn đang đọc</p></li><li><p><a href=\"/blog/github-actions-matrix-cache-artifacts\">Phần 4 — Matrix builds, Caching và Artifacts</a></p></li><li><p><a href=\"/blog/github-actions-self-hosted-runner\">Phần 5 — Self-hosted Runner: cài đặt, security, auto-scaling</a></p></li><li><p><a href=\"/blog/github-actions-reusable-workflow-composite-action\">Phần 6 — Reusable Workflows và Composite Actions</a></p></li><li><p><a href=\"/blog/github-actions-pipeline-nextjs-docker-vps\">Phần 7 — Pipeline thực tế: Next.js + Docker + VPS deploy</a></p></li><li><p><a href=\"/blog/github-actions-best-practices-debug-oidc\">Phần 8 — Best practices, Debug và OIDC hardening</a></p></li></ol></blockquote><h2>Mở đầu</h2><p>Mọi pipeline production đều cần dữ liệu nhạy cảm: Docker registry password, cloud access key, API token… Hardcode vào YAML là tự bắn vào chân — repo public có thể leak ngay; repo private vẫn để lộ trong log. GitHub Actions tách rõ <strong>3 lớp</strong>: <em>repository secrets</em> (chia sẻ toàn repo), <em>environment secrets</em> (chỉ inject khi job khai báo đúng environment), và <em>variables</em> (giá trị công khai, không nhạy cảm).</p><h2>1. Secrets, Variables và Environment</h2><p>Pipeline thật chắc chắn cần token, mật khẩu, API key… Tuyệt đối <strong>không hardcode</strong> vào YAML.</p><h3>1.1. Repository secrets</h3><p>Vào <strong>Settings → Secrets and variables → Actions → New repository secret</strong>. Đặt tên (vd: <code>DOCKER_PASSWORD</code>), dán giá trị. Trong workflow gọi:</p><pre><code>steps:\n  - name: Login Docker Hub\n    run: |\n      echo \"${{ secrets.DOCKER_PASSWORD }}\" | docker login -u \"${{ secrets.DOCKER_USERNAME }}\" --password-stdin</code></pre><p>GitHub tự động <strong>mask</strong> secret trong log — nếu lỡ <code>echo</code> ra cũng chỉ thấy <code>***</code>.</p><h3>1.2. Environment secrets</h3><p>Khi bạn có nhiều môi trường (staging/production), tạo Environment trong <strong>Settings → Environments</strong>. Mỗi env có secrets riêng và có thể yêu cầu <strong>approval</strong> trước khi deploy.</p><pre><code>jobs:\n  deploy-prod:\n    runs-on: ubuntu-latest\n    environment: production   # Bắt buộc reviewer approve\n    steps:\n      - run: deploy.sh\n        env:\n          API_KEY: ${{ secrets.PROD_API_KEY }}</code></pre><h3>1.3. Variables (không nhạy cảm)</h3><p>Dùng cho config công khai (vd: tên image, region AWS). Tạo ở <strong>Settings → Variables</strong>, gọi bằng <code>${{ vars.MY_VAR }}</code>.</p><h2>Tóm tắt</h2><p>Trong phần này bạn đã nắm:</p><ul><li><p>Tạo và dùng <strong>repository secrets</strong> — GitHub tự mask trong log dưới dạng <code>***</code>.</p></li><li><p><strong>Environment secrets</strong> + <code>environment: production</code> cho phép yêu cầu reviewer approve trước khi job chạy.</p></li><li><p><strong>Variables</strong> dùng cho giá trị công khai (tên image, region) — gọi qua <code>${{ vars.NAME }}</code>.</p></li><li><p>Quy tắc bất di bất dịch: <strong>không bao giờ</strong> <code>echo</code> secret ra log, không pass secret qua <code>workflow_dispatch input</code> (input không được mask).</p></li></ul><p>Trong <a href=\"/blog/github-actions-matrix-cache-artifacts\"><strong>Phần 4</strong></a>, ta đi vào tối ưu pipeline: <strong>matrix builds</strong> để test song song nhiều OS/version, <strong>cache</strong> để giảm thời gian cài deps, và <strong>artifacts</strong> để truyền data giữa job.</p><hr><p><a href=\"/blog/github-actions-matrix-cache-artifacts\"><strong>Phần 4:</strong> Matrix builds, Caching và Artifacts</a> →</p>",
+  "excerpt": "Quản lý token, password, API key an toàn trong GitHub Actions: repository secrets vs environment secrets, public variables, và cơ chế approval cho production deploy.",
+  "thumbnailUrl": "",
+  "published": true,
+  "order": 3,
+  "id": "0a4b0461-c136-487d-863e-111a3e3373a4",
+  "createdAt": "2026-05-11T11:15:00.000Z",
+  "updatedAt": "2026-05-11T11:15:00.000Z",
+  "tags": [
+    {
+      "id": "c5ab3ef7-99bf-42b1-bb65-3235a341a790",
+      "name": "ci-cd",
+      "slug": "ci-cd"
+    },
+    {
+      "id": "b1857961-0490-4fee-9999-d39dffea627b",
+      "name": "devops",
+      "slug": "devops"
+    }
+  ],
+  "isPinned": false,
+  "pinnedOrder": 0,
+  "seriesId": "d2738a10-ec3b-496e-8f0c-173b604bc370"
+}

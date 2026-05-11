@@ -34,12 +34,12 @@ const normalizeHref = (href?: string): string => {
   }
 
   if (href.startsWith('?')) {
-    return `/blog${href}`;
+    return `/${href}`;
   }
 
   const cleanHref = href.replace(/^\.\//, '').replace(/^\/+/, '');
   if (!cleanHref) {
-    return '/blog';
+    return '/';
   }
 
   return `/blog/${cleanHref}`;
@@ -200,7 +200,8 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
         fontFamily: tokens.typography.fontFamily.serif,
         letterSpacing: '-0.01em',
         lineHeight: 1.3,
-        color: 'text.primary'
+        color: 'text.primary',
+        scrollMarginTop: '96px',
       }}
       {...props}
     />
@@ -214,7 +215,8 @@ const MDXComponents = ({ onImageOpen }: MDXComponentsOptions) => ({
         fontWeight: 700,
         fontFamily: tokens.typography.fontFamily.serif,
         lineHeight: 1.4,
-        color: 'text.primary'
+        color: 'text.primary',
+        scrollMarginTop: '96px',
       }}
       {...props}
     />

@@ -30,12 +30,12 @@ const normalizeHref = (href: string): string => {
   }
 
   if (href.startsWith('?')) {
-    return `/blog${href}`;
+    return `/${href}`;
   }
 
   const cleanHref = href.replace(/^\.\//, '').replace(/^\/+/, '');
   if (!cleanHref) {
-    return '/blog';
+    return '/';
   }
 
   return `/blog/${cleanHref}`;
@@ -139,10 +139,18 @@ export default function HTMLContent({ content }: HTMLContentProps) {
       }
     );
 
+    // Wrap every <table> in a horizontally scrollable container so wide
+    // tables don't blow out the 768px article column on small viewports.
+    // The wrapper is the hook the table CSS in the sx prop targets.
+    const withWrappedTables = withNormalizedLinks.replace(
+      /<table\b[\s\S]*?<\/table>/gi,
+      (tableTag) => `<div class="table-scroll">${tableTag}</div>`
+    );
+
     // Transform editor code blocks to macOS Terminal Code Blocks dynamically.
     // The content is left as plain text inside <code data-highlight> and will be
     // syntax-highlighted (with auto language detection) on the client in a useEffect.
-    const transformed = withNormalizedLinks.replace(
+    const transformed = withWrappedTables.replace(
       /<pre[^>]*>([\s\S]*?)<\/pre>/gi,
       (_match, content) => {
         // Strip zero-width-space workaround chars that were injected upstream to
@@ -230,36 +238,98 @@ export default function HTMLContent({ content }: HTMLContentProps) {
         return;
       }
 
-      // highlight.js's bare `highlightAuto(source)` builds a giant Unicode
-      // character-class regex from every registered language, which V8 rejects
-      // with `SyntaxError: Range out of order in character class` on certain
-      // builds (the bug surfaces when language regexes are merged in a specific
-      // order — see highlight.js issue #4205). Passing an explicit candidate
-      // subset avoids the merged-regex codepath and keeps highlighting working.
-      // Languages here mirror what authors actually paste into posts.
+      // hljs.highlightAuto merges grammars from candidate languages into a
+      // single Unicode character-class regex which V8 rejects with
+      // `SyntaxError: Range out of order in character class` (highlight.js
+      // issue #4205, current as of 11.x). Passing an explicit candidate list
+      // used to dodge it on older builds but no longer does. We sidestep the
+      // merge entirely by calling `hljs.highlight` once per candidate and
+      // picking the highest-relevance result ourselves.
+      // NB: every entry must be registered in `highlight.js/lib/common`.
+      // `dockerfile` was here previously but isn't in common (only the full
+      // pack), so its presence threw "Could not highlight" — bash handles
+      // Dockerfiles well enough as a fallback.
       const AUTO_DETECT_LANGS = [
         'bash', 'shell', 'json', 'yaml', 'xml', 'html',
         'css', 'scss', 'javascript', 'typescript', 'python',
         'go', 'rust', 'java', 'c', 'cpp', 'csharp', 'php',
-        'ruby', 'sql', 'dockerfile', 'ini',
+        'ruby', 'sql', 'ini',
       ];
 
       const escape = (text: string) =>
         text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+      // Pattern-detect YAML/JSON before falling through to highlightAuto.
+      // hljs's auto-detection is noisy for indentation-heavy languages — for
+      // a typical YAML config it picks `bash` (relevance 15) over `yaml` (9)
+      // because the dashes and `:`-paths score higher in bash's grammar, and
+      // bash's tokenizer then colours almost nothing on the resulting block.
+      // Forcing `yaml` when the content matches typical YAML structure gives
+      // 14 colored spans instead of 1.
+      const trimmed = source.trim();
+      let forcedLang: string | null = null;
+      // JSON: well-formed object/array literal.
+      if (/^[\[{]/.test(trimmed)) {
+        try { JSON.parse(trimmed); forcedLang = 'json'; } catch { /* not JSON */ }
+      }
+      // YAML: starts with `---`, or majority of lines look like `key:` /
+      // `- bullet` and there's almost no curly/paren/semicolon noise.
+      if (!forcedLang) {
+        const lines = trimmed.split('\n').filter((l) => l.trim());
+        if (trimmed.startsWith('---') && lines.length >= 2) {
+          forcedLang = 'yaml';
+        } else if (lines.length >= 3) {
+          let yamlish = 0;
+          let codeish = 0;
+          for (const l of lines) {
+            if (/^\s*[\w.-]+\s*:\s*(\S|$)/.test(l) || /^\s*-\s/.test(l)) yamlish++;
+            // Strip mustache-style `{{ }}` (common in YAML templating) before
+            // counting code markers so a Helm-style `{{ .Hostname }}` doesn't
+            // disqualify the block.
+            const stripped = l.replace(/\{\{[^}]*\}\}/g, '');
+            if (/[{};()]/.test(stripped)) codeish++;
+          }
+          if (yamlish / lines.length > 0.4 && codeish / lines.length < 0.2) {
+            forcedLang = 'yaml';
+          }
+        }
+      }
+
       let highlightedHtml: string;
       let language: string | undefined;
       let relevance = 0;
 
-      try {
-        const result = hljs.highlightAuto(source, AUTO_DETECT_LANGS);
-        language = result.language;
-        relevance = result.relevance;
-
-        // Low-confidence auto detection is usually noise — fall back to plain.
-        highlightedHtml = language && relevance >= 5 ? result.value : escape(source);
-      } catch {
-        highlightedHtml = escape(source);
+      if (forcedLang) {
+        try {
+          const r = hljs.highlight(source, { language: forcedLang });
+          language = forcedLang;
+          relevance = Math.max(r.relevance, 5);
+          highlightedHtml = r.value;
+        } catch {
+          highlightedHtml = escape(source);
+        }
+      } else {
+        // Manual auto-detect: highlight as each candidate, pick the best by
+        // relevance. Single-language calls don't trigger hljs's merged-regex
+        // bug. Each call is cheap (~ms); 22 candidates × few ms is fine for
+        // the 1-3 code blocks a typical post has.
+        let best = { language: '', relevance: 0, value: '' };
+        for (const lang of AUTO_DETECT_LANGS) {
+          try {
+            const r = hljs.highlight(source, { language: lang, ignoreIllegals: true });
+            if (r.relevance > best.relevance) {
+              best = { language: lang, relevance: r.relevance, value: r.value };
+            }
+          } catch {
+            // Skip this language — either not registered or threw on the
+            // source. Other candidates will still be tried.
+          }
+        }
+        language = best.language;
+        relevance = best.relevance;
+        // Keep the same confidence floor as before — low-relevance results
+        // are usually noise that paints the wrong tokens.
+        highlightedHtml = language && relevance >= 5 ? best.value : escape(source);
       }
 
       block.innerHTML = highlightedHtmlToLines(highlightedHtml);
@@ -310,7 +380,10 @@ export default function HTMLContent({ content }: HTMLContentProps) {
             letterSpacing: '-0.01em',
             mb: 2,
             mt: 6,
-            fontWeight: 700
+            fontWeight: 700,
+            // Offset for native anchor scrolling — keeps the heading clear
+            // of the reading-progress bar / viewport edge after a ToC click.
+            scrollMarginTop: '96px',
           },
           '& h1': { fontSize: '2.25rem' },
           '& h2': { fontSize: '1.85rem' },
@@ -367,6 +440,57 @@ export default function HTMLContent({ content }: HTMLContentProps) {
               fontFamily: tokens.typography.fontFamily.serif,
               color: 'text.secondary'
             }
+          },
+          // Tables: the editor emits bare <table>/<thead>/<tbody>/<tr>/<th>/<td>.
+          // Without explicit styles the browser uses default table layout —
+          // zero padding, no borders, columns sized purely by content — so
+          // adjacent columns visually run into each other. Wrap the table in
+          // an overflow:auto block so wide tables scroll horizontally on
+          // narrow viewports instead of overflowing the article container.
+          '& .table-scroll': {
+            my: 6,
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            borderRadius: '8px',
+            border: '1px solid',
+            borderColor: 'divider',
+          },
+          '& .table-scroll > table': {
+            width: '100%',
+            borderCollapse: 'collapse',
+            fontFamily: tokens.typography.fontFamily.serif,
+            fontSize: '1rem',
+            color: 'text.secondary',
+          },
+          '& .table-scroll th, & .table-scroll td': {
+            padding: '12px 16px',
+            textAlign: 'left',
+            verticalAlign: 'top',
+            lineHeight: 1.6,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          },
+          '& .table-scroll thead th': {
+            color: 'text.primary',
+            fontWeight: 700,
+            bgcolor: alpha(tokens.color.primary, 0.08),
+            borderBottom: '2px solid',
+            borderBottomColor: alpha(tokens.color.primary, 0.3),
+            whiteSpace: 'nowrap',
+          },
+          '& .table-scroll tbody tr:last-of-type td': {
+            borderBottom: 'none',
+          },
+          '& .table-scroll tbody tr:nth-of-type(even)': {
+            bgcolor: alpha(tokens.color.primary, 0.03),
+          },
+          '& .table-scroll code': {
+            fontFamily: tokens.typography.fontFamily.mono,
+            fontSize: '0.85em',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            bgcolor: alpha(tokens.color.primary, 0.1),
+            color: 'text.primary',
           },
           // Terminal MacOS-style code block — always dark, readable in both color schemes.
           '& .terminal-wrapper': {

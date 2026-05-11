@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { isAdmin } from '@/lib/auth-config';
 import { CommentsDB, PostsDB } from '@/lib/storage';
 import { sendCommentNotification } from '@/lib/mail';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,11 +16,10 @@ export async function GET(
 
   try {
     const session = await auth();
-    const isAdmin = session?.user?.email === process.env.ALLOWED_EMAIL;
     const comments = await getVisibleCommentsForPost(
       slug,
       session?.user?.email,
-      isAdmin,
+      isAdmin(session),
     );
     return NextResponse.json(comments);
   } catch {

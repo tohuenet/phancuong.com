@@ -124,36 +124,53 @@ export default function ThemeContextProvider({ children }: { children: React.Rea
           Math.max(y, window.innerHeight - y)
         );
 
-        const transition = doc.startViewTransition(async () => {
-          const nextMode = mode === 'light' ? 'dark' : 'light';
-          flushSync(() => {
-            setMode(nextMode);
+        let transition;
+        try {
+          transition = doc.startViewTransition(async () => {
+            const nextMode = mode === 'light' ? 'dark' : 'light';
+            flushSync(() => {
+              setMode(nextMode);
+            });
+            // Ensure attribute is set before the browser takes the new screenshot
+            document.documentElement.setAttribute('data-mui-color-scheme', nextMode);
           });
-          // Ensure attribute is set before the browser takes the new screenshot
-          document.documentElement.setAttribute('data-mui-color-scheme', nextMode);
-        });
+        } catch {
+          // startViewTransition throws InvalidStateError if the document is
+          // hidden/unloading or another transition is mid-flight. Fall back
+          // to a plain mode swap so the toggle still works.
+          setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+          isThemeTransitioningRef.current = false;
+          return;
+        }
 
-        transition.ready.then(() => {
-          document.documentElement.animate(
-            {
-              clipPath: [
-                `circle(0px at ${x}px ${y}px)`,
-                `circle(${endRadius}px at ${x}px ${y}px)`,
-              ],
-            },
-            {
-              duration: 500,
-              easing: 'ease-in-out',
-              pseudoElement: '::view-transition-new(root)',
-            }
-          ).finished.finally(() => {
+        transition.ready
+          .then(() => {
+            document.documentElement.animate(
+              {
+                clipPath: [
+                  `circle(0px at ${x}px ${y}px)`,
+                  `circle(${endRadius}px at ${x}px ${y}px)`,
+                ],
+              },
+              {
+                duration: 500,
+                easing: 'ease-in-out',
+                pseudoElement: '::view-transition-new(root)',
+              }
+            ).finished.finally(() => {
+              isThemeTransitioningRef.current = false;
+            });
+          })
+          .catch(() => {
+            // Transition skipped (e.g. nav happened mid-flight) — clear lock.
             isThemeTransitioningRef.current = false;
           });
-        });
 
-        transition.finished.finally(() => {
-          isThemeTransitioningRef.current = false;
-        });
+        transition.finished
+          .catch(() => {})
+          .finally(() => {
+            isThemeTransitioningRef.current = false;
+          });
       },
     }),
     [mode],

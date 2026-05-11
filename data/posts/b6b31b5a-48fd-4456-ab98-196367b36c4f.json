@@ -1,0 +1,27 @@
+{
+  "title": "Phần 6 — Kubernetes executor: scale runner trên K8s",
+  "slug": "gitlab-cicd-kubernetes-executor",
+  "content": "<blockquote><p><strong>Series GitLab CI/CD Toàn Tập — 9 phần:</strong></p><ol><li><p><a href=\"/blog/gitlab-cicd-tong-quan-kien-truc-khai-niem\">Phần 1 — Tổng quan: GitLab CI/CD, kiến trúc và các khái niệm</a></p></li><li><p><a href=\"/blog/gitlab-cicd-yml-variables\">Phần 2 — .gitlab-ci.yml đầu tiên và Variables (predefined, UI, masked)</a></p></li><li><p><a href=\"/blog/gitlab-cicd-cache-artifacts-reports\">Phần 3 — Cache vs Artifacts: chiến lược và Reports</a></p></li><li><p><a href=\"/blog/gitlab-cicd-rules-merge-request-pipelines\">Phần 4 — Rules và Merge Request Pipelines</a></p></li><li><p><a href=\"/blog/gitlab-cicd-runner-self-hosted-docker\">Phần 5 — GitLab Runner self-hosted: cài đặt và executors (Shell/Docker)</a></p></li><li><p><strong>Phần 6 — Kubernetes executor: scale runner trên K8s</strong> ← bạn đang đọc</p></li><li><p><a href=\"/blog/gitlab-cicd-include-extends-anchors\">Phần 7 — include, extends, anchors — pipeline modular</a></p></li><li><p><a href=\"/blog/gitlab-cicd-environments-review-apps\">Phần 8 — Environments, Deployments và Review Apps</a></p></li><li><p><a href=\"/blog/gitlab-cicd-pipeline-nextjs-k8s\">Phần 9 — Pipeline thực tế Next.js → Docker → K8s + best practices + debug</a></p></li></ol></blockquote><h2>Mở đầu</h2><p>Khi pipeline nhiều và <em>bursty</em> (CI nặng buổi tối, sáng nhẹ), Docker executor trên một máy không đủ. <strong>Kubernetes executor</strong> giải quyết bằng cách spin một pod cho mỗi job — chạy xong huỷ luôn, scale tự động theo node có sẵn trong cluster. Khi có 100 MR cùng mở, K8s cluster tự sinh 100 pod chạy song song. Đây là kiến trúc CI/CD hiệu quả nhất hiện nay cho team trung-lớn.</p><h2>1. Kubernetes executor — khi cần scale</h2><p>Khi pipeline nhiều và bursty (CI nặng buổi tối, sáng nhẹ), Kubernetes executor cực kỳ hiệu quả: mỗi job sinh ra một pod, chạy xong huỷ luôn.</p><p>Cách dễ nhất là dùng <strong>GitLab Runner Helm chart</strong>:</p><pre><code># values.yaml\ngitlabUrl: https://gitlab.com\nrunnerToken: glrt-xxx\n\nrunners:\n  config: |\n    [[runners]]\n      [runners.kubernetes]\n        namespace = \"gitlab-runner\"\n        image = \"alpine:3.20\"\n        cpu_request = \"500m\"\n        memory_request = \"512Mi\"\n        cpu_limit = \"2\"\n        memory_limit = \"4Gi\"\n        helper_cpu_request = \"100m\"\n        helper_memory_request = \"128Mi\"\n        privileged = false\n        service_account = \"gitlab-runner\"\n        [runners.kubernetes.pod_labels]\n          \"app.kubernetes.io/managed-by\" = \"gitlab-runner\"</code></pre><pre><code>helm repo add gitlab https://charts.gitlab.io\nhelm install gitlab-runner gitlab/gitlab-runner \\\n  -n gitlab-runner --create-namespace \\\n  -f values.yaml</code></pre><p>Job chạy xong, pod biến mất, không tốn resource. Khi có 100 MR cùng mở, Kubernetes tự spin 100 pod chạy song song (giới hạn theo node có sẵn). Đây là kiến trúc CI/CD hiệu quả nhất hiện nay.</p><h2>Tóm tắt</h2><p>Trong phần này bạn đã nắm:</p><ul><li><p>Mỗi job = một pod ephemeral; chạy xong pod biến mất, không tốn resource.</p></li><li><p>Triển khai dễ qua <strong>GitLab Runner Helm chart</strong> với <code>values.yaml</code> chứa runner config inline.</p></li><li><p>Khai báo <code>cpu_request/memory_request</code> và <code>cpu_limit/memory_limit</code> trong config — quan trọng cho scheduler.</p></li><li><p>Khi có burst (vd 100 MR cùng mở), K8s tự spin 100 pod song song — giới hạn theo node available.</p></li></ul><p>Trong <a href=\"/blog/gitlab-cicd-include-extends-anchors\"><strong>Phần 7</strong></a>, ta làm pipeline modular với <code>include</code> (nhập file), <code>extends</code> (kế thừa job), và YAML anchors — chìa khoá để pipeline org-wide không bị copy-paste.</p><hr><p><a href=\"/blog/gitlab-cicd-include-extends-anchors\"><strong>Phần 7:</strong> include, extends, anchors — pipeline modular</a> →</p>",
+  "excerpt": "Scale CI bằng Kubernetes executor: mỗi job sinh ra một pod, chạy xong huỷ. Triển khai GitLab Runner Helm chart trên K8s cluster.",
+  "thumbnailUrl": "",
+  "published": true,
+  "order": 6,
+  "id": "b6b31b5a-48fd-4456-ab98-196367b36c4f",
+  "createdAt": "2026-05-11T12:10:00.000Z",
+  "updatedAt": "2026-05-11T12:10:00.000Z",
+  "tags": [
+    {
+      "id": "c5ab3ef7-99bf-42b1-bb65-3235a341a790",
+      "name": "ci-cd",
+      "slug": "ci-cd"
+    },
+    {
+      "id": "b1857961-0490-4fee-9999-d39dffea627b",
+      "name": "devops",
+      "slug": "devops"
+    }
+  ],
+  "isPinned": false,
+  "pinnedOrder": 0,
+  "seriesId": "b5333de6-daac-4b9c-ae45-7dbf29c8f836"
+}

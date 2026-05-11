@@ -28,7 +28,12 @@
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  /* `clip` instead of `hidden` — both prevent horizontal scroll, but `hidden`
+     promotes the element to a scroll container, which silently disables
+     `scroll-behavior: smooth` and turns ToC anchor clicks into instant jumps.
+     `clip` clips overflow without creating a scroll container, so smooth
+     anchor scrolling works as authored. */
+  overflow-x: clip;
   scroll-behavior: smooth;
 }
 

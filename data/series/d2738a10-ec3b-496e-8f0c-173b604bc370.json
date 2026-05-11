@@ -1,0 +1,7 @@
+{
+  "id": "d2738a10-ec3b-496e-8f0c-173b604bc370",
+  "slug": "github-actions-toan-tap",
+  "title": "GitHub Actions Toàn Tập — Từ CI/CD Cơ Bản Đến Self-hosted Runner",
+  "description": "Series 8 phần hướng dẫn GitHub Actions từ A đến Z: khái niệm cốt lõi, viết workflow YAML, triggers nâng cao, secrets/environment, matrix & cache, self-hosted runner, reusable workflows, pipeline thực tế và OIDC hardening.",
+  "thumbnailUrl": ""
+}

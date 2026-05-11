@@ -1,5 +1,18 @@
 import nodemailer from 'nodemailer';
 
+// Plain-text → HTML escape for fields that are *not* meant to contain markup
+// (commenter name, post title, URLs in attributes). `commentContent` is the
+// only field that legitimately holds HTML — it's already DOMPurify-sanitized
+// upstream so it goes through unescaped.
+function escapeHtml(s: string): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT || '587'),
@@ -26,6 +39,10 @@ export async function sendCommentNotification({
   const adminEmail = process.env.ALLOWED_EMAIL;
   if (!adminEmail) return;
 
+  const safeTitle = escapeHtml(postTitle);
+  const safeAuthor = escapeHtml(commentAuthor);
+  const safeUrl = escapeHtml(postUrl);
+
   const mailOptions = {
     from: `"phancuong.com" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
     to: adminEmail,
@@ -33,14 +50,14 @@ export async function sendCommentNotification({
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; borderRadius: 10px;">
         <h2 style="color: #3b82f6;">Có bình luận mới trên blog của bạn</h2>
-        <p><strong>Bài viết:</strong> ${postTitle}</p>
-        <p><strong>Người bình luận:</strong> ${commentAuthor}</p>
+        <p><strong>Bài viết:</strong> ${safeTitle}</p>
+        <p><strong>Người bình luận:</strong> ${safeAuthor}</p>
         <p><strong>Nội dung:</strong></p>
         <div style="background: #f9fafb; padding: 15px; border-radius: 5px; border-left: 4px solid #3b82f6;">
           ${commentContent}
         </div>
         <p style="margin-top: 20px;">
-          <a href="${postUrl}" style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Xem bình luận</a>
+          <a href="${safeUrl}" style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Xem bình luận</a>
         </p>
       </div>
     `,

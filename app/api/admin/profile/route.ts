@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { isAdmin } from '@/lib/auth-config';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -7,9 +8,8 @@ const PROFILE_FILE = path.join(process.cwd(), 'data', 'profile.json');
 
 export async function POST(request: Request) {
   const session = await auth();
-  
-  // Strict Security Check
-  if (!session || session.user?.email !== process.env.ALLOWED_EMAIL) {
+
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -1,32 +1,26 @@
 /**
- * Converts a string to a URL-friendly slug.
- * Removes Vietnamese diacritics and appends a short unique identifier if requested.
+ * Converts a string to a URL-friendly slug. Removes Vietnamese diacritics
+ * and reduces to a-z, 0-9, and single hyphens. The result is *not*
+ * guaranteed to be unique — callers that persist must run it through
+ * `ensureUniquePostSlug` (or equivalent) to disambiguate collisions.
  */
-export function slugify(text: string, appendId: boolean = true): string {
+export function slugify(text: string): string {
   if (!text) return '';
 
-  // 1. Convert to lowercase
   let slug = text.toLowerCase();
-
-  // 2. Remove accents/diacritics
-  slug = slug.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  // 3. Replace special characters (đ, Đ)
+  slug = slug.normalize('NFD').replace(/[̀-ͯ]/g, '');
   slug = slug.replace(/[đ|Đ]/g, 'd');
-
-  // 4. Remove non-alphanumeric characters (keep hyphens and spaces)
   slug = slug.replace(/[^a-z0-9\s-]/g, '');
-
-  // 5. Replace spaces and multiple hyphens with a single hyphen
   slug = slug.replace(/[\s-]+/g, '-');
-
-  // 6. Trim hyphens from start and end
   slug = slug.replace(/^-+|-+$/g, '');
 
-  // 7. Append short unique ID if requested (4-5 characters)
-  if (appendId) {
-    const shortId = Math.random().toString(36).substring(2, 7);
-    slug = slug ? `${slug}-${shortId}` : shortId;
+  // Cap at 80 chars on a word boundary so very long titles don't produce
+  // unwieldy URLs. 80 keeps the slug under most aggregators' truncation
+  // and well inside the 2048-byte URL practical ceiling.
+  if (slug.length > 80) {
+    const cut = slug.slice(0, 80);
+    const lastDash = cut.lastIndexOf('-');
+    slug = lastDash > 40 ? cut.slice(0, lastDash) : cut;
   }
 
   return slug;

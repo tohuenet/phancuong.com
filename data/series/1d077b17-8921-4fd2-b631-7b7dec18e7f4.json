@@ -1,0 +1,7 @@
+{
+  "id": "1d077b17-8921-4fd2-b631-7b7dec18e7f4",
+  "slug": "observability-grafana-stack",
+  "title": "Observability với Grafana Stack",
+  "description": "Series 6 phần hướng dẫn dựng full observability stack production: Grafana LGTM (Loki/Tempo/Mimir), Alloy collector, SeaweedFS object storage, Pyroscope profiling, Beyla auto-instrumentation và best practices.",
+  "thumbnailUrl": ""
+}
